@@ -9,17 +9,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+@Data // think about it
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "_user")
 public class User {
-    // maybe Integer?
     @Id
     @GeneratedValue
-    private int id;
+    private Integer id;
 
     private String username;
     private String email;
