@@ -6,6 +6,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/trade
     username: xqtwk
     password: password
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,3 +17,11 @@ spring:
     show-sql: true
   main:
     web-application-type: servlet
+
+application:
+  security:
+    jwt:
+      secret-key: F51836B87EEF55C18A0A33EB8E79B217B77FD3C7F78CE65117ED1F19022BEC0C
+      expiration: 86400000 # a day
+      refresh-token:
+        expiration: 604800000 # 7 days
