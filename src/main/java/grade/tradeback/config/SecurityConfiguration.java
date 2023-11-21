@@ -23,8 +23,8 @@ import static org.springframework.http.HttpMethod.*;
 @EnableMethodSecurity
 public class SecurityConfiguration {
     private static final String[] WHITE_LIST = {
-            "/",
-            "/auth/**"
+            "/auth/**",
+            "/"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -36,7 +36,6 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req.requestMatchers(WHITE_LIST)
                         .permitAll()
-                        .requestMatchers("/profile/**").hasAnyRole(ADMIN.name())
                         .anyRequest()
                         .authenticated()
                 )
