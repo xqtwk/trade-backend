@@ -22,6 +22,6 @@ application:
   security:
     jwt:
       secret-key: F51836B87EEF55C18A0A33EB8E79B217B77FD3C7F78CE65117ED1F19022BEC0C
-      expiration: 86400000 # a day
+      expiration: 86400000 # a day(24h)
       refresh-token:
-        expiration: 604800000 # 7 days
+        expiration: 604800000 # 7 days(168h)
