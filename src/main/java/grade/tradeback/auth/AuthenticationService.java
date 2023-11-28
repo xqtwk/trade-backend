@@ -2,17 +2,20 @@ package grade.tradeback.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import grade.tradeback.config.JwtService;
+import grade.tradeback.tfa.TwoFactorAuthenticationService;
 import grade.tradeback.token.Token;
 import grade.tradeback.token.TokenRepository;
 import grade.tradeback.token.TokenType;
 import grade.tradeback.user.Role;
 import grade.tradeback.user.User;
 import grade.tradeback.user.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TwoFactorAuthenticationService twoFactorAuthenticationService;
 
     // REGISTRATION
     public AuthenticationResponse register(RegisterRequest request) {
@@ -36,14 +40,21 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
+                .mfaEnabled(request.isMfaEnabled())
                 .build();
+        // IF MFA is enabled -> generate secret
+        if (request.isMfaEnabled()) {
+            user.setSecret(twoFactorAuthenticationService.generateNewSecret());
+        }
         var savedUser = userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         saveUserToken(savedUser, jwtToken);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken) // so user doesn't have to log in after registering by himself
+                .secretImageUri(twoFactorAuthenticationService.generateQrCodeImageUri(user.getSecret()))
                 .refreshToken(refreshToken)
+                .mfaEnabled(user.isMfaEnabled())
                 .build();
     }
 
@@ -57,6 +68,13 @@ public class AuthenticationService {
         );
         var user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new NoSuchElementException("No user found with username: " + request.getUsername()));
+        if (user.isMfaEnabled()) {
+            return AuthenticationResponse.builder()
+                    .accessToken("")
+                    .refreshToken("")
+                    .mfaEnabled(true)
+                    .build();
+        }
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         revokeAllUserTokens(user);
@@ -64,6 +82,7 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .mfaEnabled(false)
                 .build();
     }
 
@@ -97,11 +116,11 @@ public class AuthenticationService {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String refreshToken;
         final String username;
-        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return;
         }
         refreshToken = authHeader.substring(7);
-        username= jwtService.extractUsername(refreshToken);
+        username = jwtService.extractUsername(refreshToken);
         if (username != null) {
             var user = this.userRepository.findByUsername(username)
                     .orElseThrow();
@@ -119,9 +138,26 @@ public class AuthenticationService {
                 var authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
+                        .mfaEnabled(false)
                         .build();
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
         }
+    }
+
+    public AuthenticationResponse verifyCode(
+            VerificationRequest verificationRequest
+    ) {
+        User user = userRepository.findByUsername(verificationRequest.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException(String.format("No user found with %S",
+                        verificationRequest.getUsername())));
+        if (twoFactorAuthenticationService.isOtpNotValid(user.getSecret(), verificationRequest.getCode())) {
+            throw new BadCredentialsException("Code is not correct");
+        }
+        var jwtToken = jwtService.generateToken(user);
+        return AuthenticationResponse.builder()
+                .accessToken(jwtToken)
+                .mfaEnabled(user.isMfaEnabled())
+                .build();
     }
 }
