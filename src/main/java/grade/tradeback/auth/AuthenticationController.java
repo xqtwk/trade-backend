@@ -19,7 +19,11 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authenticationService.register(request));
+        var response = authenticationService.register(request);
+        if (request.isMfaEnabled()) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.accepted().build();
     }
 
     @PostMapping("/authenticate")
@@ -33,5 +37,12 @@ public class AuthenticationController {
             HttpServletResponse response
     ) throws IOException {
         authenticationService.refreshToken(request, response);
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<?> verifyCode(
+            @RequestBody VerificationRequest verificationRequest
+    ) {
+        return ResponseEntity.ok(authenticationService.verifyCode(verificationRequest));
     }
 }
