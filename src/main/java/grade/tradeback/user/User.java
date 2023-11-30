@@ -38,6 +38,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Token> tokens;
 
+    private double balance;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,7 +1,8 @@
 server:
   port: 8080
-
 spring:
+  config:
+    import: stripe.properties
   datasource:
     url: jdbc:postgresql://localhost:5432/trade
     username: xqtwk
@@ -17,8 +18,10 @@ spring:
     show-sql: true
   main:
     web-application-type: servlet
-
 application:
+  stripe:
+    api:
+      key: ${stripe.api.testkey}
   security:
     jwt:
       secret-key: F51836B87EEF55C18A0A33EB8E79B217B77FD3C7F78CE65117ED1F19022BEC0C
