@@ -1,4 +1,4 @@
-package grade.tradeback.auth;
+package grade.tradeback.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

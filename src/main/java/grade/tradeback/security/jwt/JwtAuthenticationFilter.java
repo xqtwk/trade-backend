@@ -1,4 +1,4 @@
-package grade.tradeback.config;
+package grade.tradeback.security.config;
 
 import grade.tradeback.token.TokenRepository;
 import jakarta.servlet.FilterChain;

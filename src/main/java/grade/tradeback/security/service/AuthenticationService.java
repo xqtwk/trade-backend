@@ -1,11 +1,11 @@
-package grade.tradeback.auth;
+package grade.tradeback.security.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import grade.tradeback.config.JwtService;
+import grade.tradeback.security.jwt.JwtService;
 import grade.tradeback.tfa.TwoFactorAuthenticationService;
-import grade.tradeback.token.Token;
-import grade.tradeback.token.TokenRepository;
-import grade.tradeback.token.TokenType;
+import grade.tradeback.security.jwt.token.Token;
+import grade.tradeback.security.jwt.token.TokenRepository;
+import grade.tradeback.security.jwt.token.TokenType;
 import grade.tradeback.user.Role;
 import grade.tradeback.user.User;
 import grade.tradeback.user.UserRepository;

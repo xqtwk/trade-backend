@@ -1,4 +1,4 @@
-package grade.tradeback.config;
+package grade.tradeback.security.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -1,6 +1,6 @@
-package grade.tradeback.config;
+package grade.tradeback.security.config;
 
-import grade.tradeback.token.TokenRepository;
+import grade.tradeback.security.jwt.token.TokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

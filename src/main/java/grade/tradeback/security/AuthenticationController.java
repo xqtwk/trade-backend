@@ -1,5 +1,10 @@
-package grade.tradeback.auth;
+package grade.tradeback.security.controller;
 
+import grade.tradeback.security.service.AuthenticationService;
+import grade.tradeback.security.dto.AuthenticationRequest;
+import grade.tradeback.security.dto.AuthenticationResponse;
+import grade.tradeback.security.dto.RegisterRequest;
+import grade.tradeback.security.dto.VerificationRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

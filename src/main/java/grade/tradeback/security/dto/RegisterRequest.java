@@ -1,4 +1,4 @@
-package grade.tradeback.auth;
+package grade.tradeback.security.auth;
 
 import grade.tradeback.user.Role;
 import lombok.AllArgsConstructor;
