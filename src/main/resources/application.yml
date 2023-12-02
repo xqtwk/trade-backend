@@ -1,11 +1,17 @@
 server:
   port: 8080
-
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-password: GtjjskqTeXSUAtnvsVW1XnR5X8Xa30Rn
+    keyStoreType: PKCS12
+    keyAlias: myalias
 spring:
+  config:
+    import: stripe.properties
   datasource:
-    url: jdbc:postgresql://localhost:5432/trade
-    username: xqtwk
-    password: password
+    url: jdbc:postgresql://62.72.21.48:5432/u922605802_trade
+    username: u922605802_xqtwk
+    password: 3gouwmt#G
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -17,8 +23,10 @@ spring:
     show-sql: true
   main:
     web-application-type: servlet
-
 application:
+  stripe:
+    api:
+      key: ${stripe.api.testkey}
   security:
     jwt:
       secret-key: F51836B87EEF55C18A0A33EB8E79B217B77FD3C7F78CE65117ED1F19022BEC0C

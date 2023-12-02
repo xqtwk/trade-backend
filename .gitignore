@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/resources/stripe.properties
+/src/main/resources/keystore.p12
