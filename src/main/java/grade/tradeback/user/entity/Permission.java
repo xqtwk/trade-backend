@@ -1,4 +1,4 @@
-package grade.tradeback.user.model;
+package grade.tradeback.user.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package grade.tradeback.tfa;
+package grade.tradeback.security.tfa;
 
 import dev.samstevens.totp.code.HashingAlgorithm;
 import dev.samstevens.totp.exceptions.QrGenerationException;

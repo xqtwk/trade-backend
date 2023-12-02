@@ -1,4 +1,4 @@
-package grade.tradeback.payments;
+package grade.tradeback.payment;
 
 import org.springframework.web.bind.annotation.*;
 

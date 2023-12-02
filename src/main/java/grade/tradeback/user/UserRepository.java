@@ -1,5 +1,6 @@
 package grade.tradeback.user;
 
+import grade.tradeback.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,10 +1,10 @@
-package grade.tradeback.payments;
+package grade.tradeback.payment;
 
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
 import com.stripe.model.Payout;
-import grade.tradeback.user.User;
+import grade.tradeback.user.entity.User;
 import grade.tradeback.user.UserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;

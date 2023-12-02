@@ -1,5 +1,6 @@
-package grade.tradeback.config;
+package grade.tradeback.security.config;
 
+import grade.tradeback.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +15,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.filter.CorsFilter;
 
-import static grade.tradeback.user.Permission.*;
-import static grade.tradeback.user.Role.*;
+import static grade.tradeback.user.entity.Permission.*;
+import static grade.tradeback.user.entity.Role.*;
 import static org.springframework.http.HttpMethod.*;
 
 @Configuration

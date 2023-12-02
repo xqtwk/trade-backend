@@ -1,4 +1,4 @@
-package grade.tradeback.demo;
+package grade.tradeback.controllers;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

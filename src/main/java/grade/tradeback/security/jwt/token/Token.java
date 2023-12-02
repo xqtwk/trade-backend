@@ -1,6 +1,6 @@
-package grade.tradeback.token;
+package grade.tradeback.security.jwt.token;
 
-import grade.tradeback.user.User;
+import grade.tradeback.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

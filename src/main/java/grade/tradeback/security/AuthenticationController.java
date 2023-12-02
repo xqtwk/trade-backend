@@ -1,4 +1,4 @@
-package grade.tradeback.security.controller;
+package grade.tradeback.security;
 
 import grade.tradeback.security.service.AuthenticationService;
 import grade.tradeback.security.dto.AuthenticationRequest;

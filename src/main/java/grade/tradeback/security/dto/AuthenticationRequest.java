@@ -1,4 +1,4 @@
-package grade.tradeback.security.auth;
+package grade.tradeback.security.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

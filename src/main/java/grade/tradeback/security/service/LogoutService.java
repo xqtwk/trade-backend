@@ -1,4 +1,4 @@
-package grade.tradeback.security.config;
+package grade.tradeback.security.service;
 
 import grade.tradeback.security.jwt.token.TokenRepository;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,13 +1,17 @@
-package grade.tradeback.security.auth;
+package grade.tradeback.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import grade.tradeback.security.dto.AuthenticationRequest;
+import grade.tradeback.security.dto.AuthenticationResponse;
+import grade.tradeback.security.dto.RegisterRequest;
+import grade.tradeback.security.dto.VerificationRequest;
 import grade.tradeback.security.jwt.JwtService;
-import grade.tradeback.tfa.TwoFactorAuthenticationService;
+import grade.tradeback.security.tfa.TwoFactorAuthenticationService;
 import grade.tradeback.security.jwt.token.Token;
 import grade.tradeback.security.jwt.token.TokenRepository;
 import grade.tradeback.security.jwt.token.TokenType;
-import grade.tradeback.user.Role;
-import grade.tradeback.user.User;
+import grade.tradeback.user.entity.Role;
+import grade.tradeback.user.entity.User;
 import grade.tradeback.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
