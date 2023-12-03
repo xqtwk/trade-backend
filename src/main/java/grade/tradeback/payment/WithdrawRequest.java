@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentRequest {
+public class WithdrawRequest {
     private long amount;
+    private String connectedAccountId;
     private String userId;
     private String tokenId;
 }
