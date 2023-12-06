@@ -1,4 +1,4 @@
-package grade.tradeback.payment;
+package grade.tradeback.payment.stripe;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

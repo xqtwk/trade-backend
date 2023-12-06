@@ -1,4 +1,4 @@
-package grade.tradeback.payment;
+package grade.tradeback.payment.stripe;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
