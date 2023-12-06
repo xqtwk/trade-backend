@@ -54,6 +54,7 @@ public class AuthenticationService {
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         saveUserToken(savedUser, jwtToken);
+        System.out.println();
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken) // so user doesn't have to log in after registering by himself
                 .secretImageUri(twoFactorAuthenticationService.generateQrCodeImageUri(user.getSecret()))
@@ -159,8 +160,12 @@ public class AuthenticationService {
             throw new BadCredentialsException("Code is not correct");
         }
         var jwtToken = jwtService.generateToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user,jwtToken);
+        var refreshToken = jwtService.generateRefreshToken(user);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
+                .refreshToken(refreshToken)
                 .mfaEnabled(user.isMfaEnabled())
                 .build();
     }

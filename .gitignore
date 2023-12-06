@@ -33,3 +33,4 @@ build/
 .vscode/
 /src/main/resources/stripe.properties
 /src/main/resources/keystore.p12
+/src/main/resources/plaid.properties

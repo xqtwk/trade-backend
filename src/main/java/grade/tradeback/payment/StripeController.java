@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/pay")
-public class PaymentController {
-    private final PaymentService paymentService;
+public class StripeController {
+    private final StripeService stripeService;
 
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
+    public StripeController(StripeService stripeService) {
+        this.stripeService = stripeService;
     }
 
     @PostMapping("/top-up")
@@ -20,7 +20,7 @@ public class PaymentController {
         if(token == null || token.isEmpty()){
             return "No Token ID provided!";
         }
-        return paymentService.createCharge(paymentRequest.getAmount(),
+        return stripeService.createCharge(paymentRequest.getAmount(),
                 paymentRequest.getUserId(),
                 paymentRequest.getTokenId());
     }
@@ -28,7 +28,7 @@ public class PaymentController {
     @PostMapping("/create-account")
     public ResponseEntity<?> createAccount(@RequestBody CustomAccountRequest customAccountRequest) {
         try {
-            Account account = paymentService.createCustomAccountWithDetails(customAccountRequest);
+            Account account = stripeService.createCustomAccountWithDetails(customAccountRequest);
             return ResponseEntity.ok(account);
         } catch (StripeException e) {
             e.printStackTrace();

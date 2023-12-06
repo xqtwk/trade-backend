@@ -1,6 +1,5 @@
 package grade.tradeback.payment;
 
-import com.plaid.client.model.ItemPublicTokenExchangeResponse;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
@@ -17,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class PaymentService {
+public class StripeService {
     @Value("${application.stripe.api.key}")
     private String apiKey;
 
@@ -30,7 +29,7 @@ public class PaymentService {
     }
 
 
-    public PaymentService(UserRepository userRepository, PlaidService plaidService) {
+    public StripeService(UserRepository userRepository, PlaidService plaidService) {
         this.userRepository = userRepository;
         this.plaidService = plaidService;
         Stripe.apiKey = apiKey;
@@ -67,7 +66,7 @@ public class PaymentService {
 
 
 
-    public Account addExternalAccount(String accountId, String externalAccountToken) throws StripeException {
+    public Account addExternalBankAccount(String accountId, String externalAccountToken) throws StripeException {
         Account account = Account.retrieve(accountId);
 
         AccountUpdateParams params = AccountUpdateParams.builder()
