@@ -1,4 +1,4 @@
-package grade.tradeback.payment;
+package grade.tradeback.payment.plaid;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentRequest {
-    private long amount;
-    private String userId;
-    private String tokenId;
+public class PublicTokenRequest {
+    private String publicToken;
 }

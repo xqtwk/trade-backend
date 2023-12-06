@@ -39,6 +39,9 @@ public class User implements UserDetails {
 
     private double balance;
 
+    private String plaid_AccessToken;
+    private String plaid_item_id;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return role.getAuthorities();

@@ -7,7 +7,7 @@ server:
     keyAlias: myalias
 spring:
   config:
-    import: stripe.properties
+    import: stripe.properties, plaid.properties
   datasource:
     url: jdbc:postgresql://62.72.21.48:5432/u922605802_trade
     username: u922605802_xqtwk
@@ -24,6 +24,11 @@ spring:
   main:
     web-application-type: servlet
 application:
+  plaid:
+    api:
+      url: ${plaid.env}
+      client_id: ${plaid.client_id}
+      secret: ${plaid.secret}
   stripe:
     api:
       key: ${stripe.api.testkey}
