@@ -2,12 +2,12 @@ server:
   port: 8080
   ssl:
     key-store: classpath:keystore.p12
-    key-store-password: GtjjskqTeXSUAtnvsVW1XnR5X8Xa30Rn
+    key-store-password: Zxcwc123
     keyStoreType: PKCS12
-    keyAlias: myalias
+    keyAlias: springboot
 spring:
   config:
-    import: stripe.properties, plaid.properties
+    import: stripe.properties, plaid.properties, checkout.properties
   datasource:
     url: jdbc:postgresql://62.72.21.48:5432/u922605802_trade
     username: u922605802_xqtwk
@@ -24,6 +24,10 @@ spring:
   main:
     web-application-type: servlet
 application:
+  checkout:
+    secret_key: ${checkout.secret_key}
+    public_key: ${checkout.public_key}
+    processing_channel_id: ${checkout.processing_channel_id}
   plaid:
     api:
       url: ${plaid.env}

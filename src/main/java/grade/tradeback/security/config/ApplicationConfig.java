@@ -1,7 +1,11 @@
 package grade.tradeback.security.config;
 
+import com.checkout.CheckoutApi;
+import com.checkout.CheckoutSdk;
+import com.checkout.Environment;
 import grade.tradeback.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +36,10 @@ import static org.springframework.web.bind.annotation.RequestMethod.PATCH;
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
+    @Value("${application.checkout.secret_key}")
+    private String checkout_secretKey;
+    @Value("${application.checkout.public_key}")
+    private String checkout_publicKey;
 
     private final UserRepository userRepository;
 
@@ -81,6 +89,12 @@ public class ApplicationConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
 
+    }
+    @Bean
+    public CheckoutApi checkoutApi() {
+        return CheckoutSdk.builder().staticKeys().publicKey(checkout_publicKey).secretKey(checkout_secretKey)
+                .environment(Environment.SANDBOX)// Use PRODUCTION for live
+                .build();
     }
 
 }

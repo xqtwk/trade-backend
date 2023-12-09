@@ -89,6 +89,16 @@
             <artifactId>plaid-java</artifactId>
             <version>19.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.checkout</groupId>
+            <artifactId>checkout-sdk-java</artifactId>
+            <version>6.0.28</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version> <!-- Use the latest version available -->
+        </dependency>
     </dependencies>
 
     <build>

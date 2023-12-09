@@ -1,4 +1,4 @@
-package grade.tradeback.payment.stripe;
+package grade.tradeback.payment.stripe.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +14,7 @@ public class CustomAccountRequest {
     private String email;
     private String url; // Business URL
     private String tosIp; // IP address for TOS acceptance
-    private long tosDate; // Timestamp for TOS acceptance
+    private String tosDate; // Timestamp for TOS acceptance
     // Individual information
     private String firstName;
     private String lastName;

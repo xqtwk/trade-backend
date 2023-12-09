@@ -2,6 +2,9 @@ package grade.tradeback.payment.stripe;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
+import grade.tradeback.payment.stripe.dto.CustomAccountCreationResponse;
+import grade.tradeback.payment.stripe.dto.CustomAccountRequest;
+import grade.tradeback.payment.stripe.dto.PaymentRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,13 +29,14 @@ public class StripeController {
     }
 
     @PostMapping("/create-account")
-    public ResponseEntity<?> createAccount(@RequestBody CustomAccountRequest customAccountRequest) {
-        try {
-            Account account = stripeService.createCustomAccountWithDetails(customAccountRequest);
-            return ResponseEntity.ok(account);
-        } catch (StripeException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error creating Stripe account: " + e.getMessage());
-        }
+    public ResponseEntity<?> createAccount(@RequestBody CustomAccountRequest customAccountRequest) throws StripeException {
+        System.out.println(customAccountRequest);
+            // TODO: EDIT THIS SHIATT
+            CustomAccountCreationResponse customAccountCreationResponse = stripeService.createCustomAccountWithDetails(customAccountRequest);
+            // ResponseEntity.ok(customAccountCreationResponse);
+            return ResponseEntity.ok(
+                    stripeService
+                            .createStripeAccountAndGenerateOnboardingLink(customAccountCreationResponse.getId()));
     }
+
 }

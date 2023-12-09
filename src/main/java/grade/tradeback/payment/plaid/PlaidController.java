@@ -1,14 +1,16 @@
 package grade.tradeback.payment.plaid;
 
-import com.plaid.client.model.ItemPublicTokenExchangeResponse;
-import com.plaid.client.model.LinkTokenCreateResponse;
-import com.plaid.client.model.LinkTokenGetResponse;
+import com.plaid.client.model.*;
 import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.entity.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import retrofit2.Response;
 
+import java.io.IOException;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 
@@ -59,6 +61,22 @@ public class PlaidController {
     public LinkTokenGetResponse getLinkToken(@RequestBody LinkTokenRequest tokenRequest) throws Exception {
         return plaidService.getLinkToken(tokenRequest);
     }
+
+    @PostMapping("/create-bank-account-token")
+    public ResponseEntity<?> createStripeBankAccountToken(@RequestBody CreateBankAccountTokenRequest createBankAccountTokenRequest, Principal connectedUser) throws IOException {
+        System.out.println("fired");
+        User user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        String bankAccountToken = plaidService.createStripeBankAccountToken(createBankAccountTokenRequest.getAccount_id(), user.getPlaid_AccessToken());
+
+        if (bankAccountToken != null) {
+            return ResponseEntity.ok(bankAccountToken);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+
+    }
+
 
 
 }

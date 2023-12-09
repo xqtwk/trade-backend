@@ -7,7 +7,10 @@ import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 import retrofit2.Response;
 
 import java.io.IOException;
@@ -117,4 +120,45 @@ public class PlaidService {
             throw new Exception("IO Exception in getting link token", e);
         }
     }
+
+    public String createStripeBankAccountToken(String account_id, String access_token) throws IOException {
+        HashMap<String, String> apiKeys = new HashMap<>();
+        apiKeys.put("clientId", client_id);
+        apiKeys.put("secret", secret);
+
+        ApiClient apiClient = new ApiClient(apiKeys);
+        apiClient.setPlaidAdapter(apiEnv);
+        PlaidApi plaidClient = apiClient.createService(PlaidApi.class);
+        ProcessorStripeBankAccountTokenCreateRequest request = new ProcessorStripeBankAccountTokenCreateRequest();
+        request.accountId(account_id).accessToken(access_token).secret(secret).clientId(client_id);
+        request.setAccountId(account_id);
+        request.setAccessToken(access_token);
+        request.setSecret(secret);
+        request.setClientId(client_id);
+        System.out.println(plaidClient.processorStripeBankAccountTokenCreate(request).execute().errorBody());
+        System.out.println("secret:" + secret);
+        System.out.println("client_id:"+client_id);
+        System.out.println("account_id"+account_id);
+        System.out.println("access_token"+access_token);
+        System.out.println("Before");
+        Response<ProcessorStripeBankAccountTokenCreateResponse> response = plaidClient.processorStripeBankAccountTokenCreate(request).execute();
+        if(response.isSuccessful()) {
+            ProcessorStripeBankAccountTokenCreateResponse responseBody = response.body();
+            System.out.println("successful");
+            if (responseBody != null) {
+                System.out.println("Response received: " + responseBody);
+                System.out.println("Stripe Bank Account Token: " + responseBody.getStripeBankAccountToken());
+                System.out.println("Request ID: " + responseBody.getRequestId());
+                return responseBody.getStripeBankAccountToken();
+            } else {
+                System.out.println("Response body is null");
+                return null;
+            }
+        } else {
+            System.out.printf("Request failed with status %s and message %s%n", response.code(), response.message());
+            return null;
+        }
+    }
+
+
 }

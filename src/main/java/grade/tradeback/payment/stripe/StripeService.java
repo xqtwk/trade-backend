@@ -4,7 +4,12 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
 import com.stripe.param.*;
+import com.stripe.model.BankAccount;
+import com.stripe.param.ExternalAccountCreateParams;
+import com.stripe.service.ExternalAccountService;
 import grade.tradeback.payment.plaid.PlaidService;
+import grade.tradeback.payment.stripe.dto.CustomAccountCreationResponse;
+import grade.tradeback.payment.stripe.dto.CustomAccountRequest;
 import grade.tradeback.user.entity.User;
 import grade.tradeback.user.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -66,17 +71,36 @@ public class StripeService {
 
 
 
-    public Account addExternalBankAccount(String accountId, String externalAccountToken) throws StripeException {
+    public Account addExternalBankAccount(String accountId) throws StripeException {
+        // PARAMETER String externalAccountToken
         Account account = Account.retrieve(accountId);
-
+        /*ExternalAccountCreateParams params = ExternalAccountCreateParams.builder()
+                .setExternalAccount("LT121000011101001000")
+                .build();*/
         AccountUpdateParams params = AccountUpdateParams.builder()
-                .setExternalAccount(externalAccountToken) // Token representing the external account
+                .setExternalAccount("LT121000011101001000") // Token representing the external account
                 .build();
 
         return account.update(params);
     }
 
-    public Account createCustomAccountWithDetails(CustomAccountRequest accountRequest) throws StripeException {
+    public String createStripeAccountAndGenerateOnboardingLink(String accountId) throws StripeException {
+        // Create a Custom account
+
+        // Create an account link
+        AccountLinkCreateParams linkParams = AccountLinkCreateParams.builder()
+                .setAccount(accountId)
+                .setRefreshUrl("https://localhost:4200/wallet")
+                .setReturnUrl("https://localhost:4200/wallet")
+                .setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING)
+                .build();
+
+        AccountLink accountLink = AccountLink.create(linkParams);
+
+        return accountLink.getUrl();
+    }
+    public CustomAccountCreationResponse createCustomAccountWithDetails(CustomAccountRequest accountRequest) throws StripeException {
+        System.out.println("fired");
         AccountCreateParams params = AccountCreateParams.builder()
                 .setCountry(accountRequest.getCountry())
                 .setEmail(accountRequest.getEmail())
@@ -87,7 +111,7 @@ public class StripeService {
                         .build())
                 .setTosAcceptance(new AccountCreateParams.TosAcceptance.Builder()
                         .setIp(accountRequest.getTosIp())
-                        .setDate(accountRequest.getTosDate())
+                        .setDate(System.currentTimeMillis() / 1000)
                         .build())
                 .setIndividual(new AccountCreateParams.Individual.Builder()
                         .setFirstName(accountRequest.getFirstName())
@@ -103,10 +127,16 @@ public class StripeService {
                                 .setCity(accountRequest.getCity())
                                 .build())
                         .build())
+                .setCapabilities(
+                        AccountCreateParams.Capabilities.builder()
+                                .setTransfers(
+                                        AccountCreateParams.Capabilities.Transfers.builder().setRequested(true).build()
+                                )
+                                .build())
                 // Note: 'external_account' is typically added in a separate process
                 .build();
-
-        return Account.create(params);
+        Account account = Account.create(params);
+        return new CustomAccountCreationResponse(account);
     }
 
     public PaymentMethod attachPaymentMethodToAccount(String accountId, String paymentMethodId) throws StripeException {
