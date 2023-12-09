@@ -31,4 +31,26 @@ public class UserService {
 
         userRepository.save(user);
     }
+    // ONLY FOR DEVELOPING W/O HOST
+    public void addBalanceNoHost(String username, double amount) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setBalance(user.getBalance() + amount);
+            userRepository.save(user);
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+    }
+
+    public void addBalance(String username, String payment_id, double amount) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setBalance(user.getBalance() + amount);
+            userRepository.save(user);
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+    }
 }

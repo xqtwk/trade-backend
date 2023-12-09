@@ -4,6 +4,7 @@ import grade.tradeback.user.dto.ChangePasswordRequest;
 import grade.tradeback.user.dto.UserPublicDataRequest;
 import grade.tradeback.user.dto.UserPrivateDataRequest;
 import grade.tradeback.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -61,4 +62,6 @@ public class UserController {
         UserPrivateDataRequest userPrivateDataRequest = new UserPrivateDataRequest(user.getId(), user.getUsername(), user.getEmail(), user.getRole(), user.getBalance(), user.isMfaEnabled());
         return ResponseEntity.ok(userPrivateDataRequest);
     }
+
+
 }
