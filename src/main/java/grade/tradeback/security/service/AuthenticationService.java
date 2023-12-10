@@ -44,6 +44,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
+                .balance(0)
                 .mfaEnabled(request.isMfaEnabled())
                 .build();
         // IF MFA is enabled -> generate secret

@@ -1,4 +1,4 @@
-package grade.tradeback.payment.checkoutcom;
+package grade.tradeback.payments.rapyd;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CheckoutRequest {
-    private long amount;
-    private String token;
+public class DepositRequest {
+    private String username;
+    private String country;
+    private int amount;
 }

@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -89,12 +90,6 @@ public class ApplicationConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
 
-    }
-    @Bean
-    public CheckoutApi checkoutApi() {
-        return CheckoutSdk.builder().staticKeys().publicKey(checkout_publicKey).secretKey(checkout_secretKey)
-                .environment(Environment.SANDBOX)// Use PRODUCTION for live
-                .build();
     }
 
 }

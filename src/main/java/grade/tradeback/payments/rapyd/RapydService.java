@@ -1,5 +1,13 @@
-package grade.tradeback.rapyd;
+package grade.tradeback.payments.rapyd;
 
+import grade.tradeback.payments.transaction.Transaction;
+import grade.tradeback.payments.transaction.TransactionStatus;
+import grade.tradeback.payments.transaction.TransactionType;
+import grade.tradeback.payments.transaction.WebhookData;
+import grade.tradeback.user.UserRepository;
+import grade.tradeback.user.UserService;
+import grade.tradeback.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.springframework.stereotype.Service;
@@ -18,9 +26,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -29,6 +36,13 @@ public class RapydService {
     private final String apiUrl = "https://sandboxapi.rapyd.net";
     private final String access_key = "rak_6BD2D02EF4EF6F3BE3D6";
     private final String secret_key = "rsk_48e9c9eba49031edce6688f0bdf52c16e0cb948dd25fb5304884b7a3c0010f0a15ea3ed3322bb72e";
+    private final UserRepository userRepository;
+    private final UserService userService;
+
+    public RapydService(UserRepository userRepository, UserService userService) {
+        this.userRepository = userRepository;
+        this.userService = userService;
+    }
 
     public String hmacDigest(String msg, String keyString, String algo) {
         String digest = null;
@@ -72,6 +86,41 @@ public class RapydService {
 
         return (generatedString);
     }
+
+    public String getStatus(HashMap<String, Object> responseMap) throws IOException {
+        String status = "";
+        if (responseMap.containsKey("status") && responseMap.get("status") instanceof HashMap) {
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> statusMap = (HashMap<String, Object>) responseMap.get("status");
+            status = (String) statusMap.get("status");
+        }
+        return status;
+    }
+
+    public String getOperationId(HashMap<String, Object> responseMap) throws IOException {
+        String operationId = "";
+        if (responseMap.containsKey("status") && responseMap.get("status") instanceof HashMap) {
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> statusMap = (HashMap<String, Object>) responseMap.get("status");
+            operationId = (String) statusMap.get("operation_id");
+        }
+        return operationId;
+    }
+
+    public String getCheckoutId(HashMap<String, Object> responseMap) throws IOException {
+        String checkoutId = "";
+        if (responseMap.containsKey("data") && responseMap.get("data") instanceof HashMap) {
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> statusMap = (HashMap<String, Object>) responseMap.get("data");
+            checkoutId = (String) statusMap.get("id");
+        }
+        return checkoutId;
+    }
+
+
+    /**
+     * METHODS FOR REQUESTS BELOW
+     **/
     public String getCountries() throws Exception {
         String httpMethod = "get"; // Ensure this is uppercase as per your working example
         String urlPath = "/v1/data/countries";
@@ -102,6 +151,7 @@ public class RapydService {
         System.out.println(entity);
         return entity != null ? EntityUtils.toString(entity) : null;
     }
+
     public String getPayoutRequirements() throws Exception {
         String httpMethod = "get";
         String urlPath = "/v1/payout_methods/" + "eu_sepa_bank" + "/required_fields";
@@ -138,22 +188,15 @@ public class RapydService {
         HttpEntity entity = response.getEntity();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        HashMap<String, Object> responseMap = objectMapper.readValue(EntityUtils.toString(entity), new TypeReference<>() {});
+        HashMap<String, Object> responseMap = objectMapper.readValue(EntityUtils.toString(entity), new TypeReference<>() {
+        });
 
         String status = getStatus(responseMap);
         System.out.println(status);
         return status;
     }
 
-    public String getStatus(HashMap<String, Object> responseMap) throws IOException {
-        String status = "";
-        if (responseMap.containsKey("status") && responseMap.get("status") instanceof HashMap) {
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> statusMap = (HashMap<String, Object>) responseMap.get("status");
-            status = (String) statusMap.get("status");
-        }
-        return status;
-    }
+
     public String createPayout() throws Exception {
         String httpMethod = "post";
         String urlPath = "/v1/payouts";
@@ -201,7 +244,13 @@ public class RapydService {
         return entity != null ? EntityUtils.toString(entity) : null;
     }
 
-    public String createCheckout() throws Exception {
+    public DepositResponse createCheckout(String username, String country, int amount) throws Exception {
+        if (amount == 0) {
+            throw new IllegalArgumentException("Amount must not be zero");
+        }
+        if (amount < 0) {
+            amount *= -1;
+        }
         String httpMethod = "post";
         String urlPath = "/v1/checkout";
         String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
@@ -209,13 +258,12 @@ public class RapydService {
 
         // Construct the request body for checkout creation
         String requestBody = "{"
-                             + "\"amount\": 1050,"
+                             + "\"amount\": 100,"
                              + "\"currency\": \"EUR\","
-                             + "\"country\": \"LT\","
+                             + "\"country\": \"" + country + "\","
                              + "\"complete_checkout_url\": \"https://www.rapyd.net/\","
                              + "\"cancel_checkout_url\": \"https://www.rapyd.net/\","
                              + "\"language\": \"lt\""
-                             + "\"statement_descriptor\": \"meme\""
                              + "}";
         requestBody = requestBody.replaceAll("\\s+", "");
 
@@ -241,6 +289,51 @@ public class RapydService {
         HttpResponse response = httpClient.execute(httpPost);
         HttpEntity responseEntity = response.getEntity();
 
-        return responseEntity != null ? EntityUtils.toString(responseEntity) : null;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap<String, Object> responseMap = objectMapper.readValue(EntityUtils.toString(responseEntity), new TypeReference<>() {
+        });
+        System.out.println(responseMap);
+        String checkoutId = getCheckoutId(responseMap);
+        if (Objects.equals(getStatus(responseMap), "SUCCESS")) {
+            Optional<User> userOptional = userRepository.findByUsername(username);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                Transaction transaction = Transaction.builder()
+                        .operationId(getOperationId(responseMap))
+                        .user(user)
+                        .amount(amount)
+                        .status(TransactionStatus.PENDING)
+                        .type(TransactionType.PAYMENT)
+                        .checkoutId(checkoutId)
+                        .build();
+                userService.addTransactionToUser(username, transaction);
+                userRepository.save(user);
+            }
+        }
+        /*return responseEntity != null ? EntityUtils.toString(responseEntity) : null;*/
+        System.out.println(getCheckoutId(responseMap));
+        return DepositResponse.builder().checkoutId(checkoutId).build();
+    }
+
+    public boolean verifyWebhookSignature(String timestamp, String salt, String signature, WebhookData webhookData) {
+        String urlPath = "https://pixelpact.eu/webhook/catch"; // Get the entire URL path
+        String requestBody = ""; // Get the request body as a JSON string
+
+        // Recreate the string used for signature calculation
+        String toEnc = urlPath + salt + timestamp + access_key + secret_key + requestBody;
+
+        // Calculate the HMAC-SHA256 hash of the toEnc string
+        String calculatedSignature = hmacDigest(toEnc, secret_key, "HmacSHA256");
+
+        // Decode the provided signature from Base64
+        byte[] providedSignatureBytes = Base64.getDecoder().decode(signature);
+
+        // Encode the calculated signature to Base64
+        String calculatedSignatureBase64 = Base64.getEncoder().encodeToString(calculatedSignature.getBytes());
+
+        // Compare the calculated signature (in Base64) with the provided signature (in Base64)
+
+        return calculatedSignatureBase64.equals(signature);
     }
 }
