@@ -1,4 +1,4 @@
-package grade.tradeback.user.entity;
+package grade.tradeback.user.entity.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static grade.tradeback.user.entity.Permission.*;
+import static grade.tradeback.user.entity.enums.Permission.*;
 
 @RequiredArgsConstructor
 public enum Role {
