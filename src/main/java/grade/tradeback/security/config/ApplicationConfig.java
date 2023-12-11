@@ -1,8 +1,5 @@
 package grade.tradeback.security.config;
 
-import com.checkout.CheckoutApi;
-import com.checkout.CheckoutSdk;
-import com.checkout.Environment;
 import grade.tradeback.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,10 +34,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.PATCH;
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
-    @Value("${application.checkout.secret_key}")
-    private String checkout_secretKey;
-    @Value("${application.checkout.public_key}")
-    private String checkout_publicKey;
+
 
     private final UserRepository userRepository;
 
@@ -73,7 +67,8 @@ public class ApplicationConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         final CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Collections.singletonList("https://localhost:4200"));
+        config.addAllowedOrigin("https://pixelpact.eu");
+        config.addAllowedOrigin("http://localhost:8080");
         config.setAllowedHeaders(Arrays.asList(
                 ORIGIN,
                 CONTENT_TYPE,
