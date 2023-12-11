@@ -15,8 +15,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.filter.CorsFilter;
 
-import static grade.tradeback.user.entity.Permission.*;
-import static grade.tradeback.user.entity.Role.*;
+import static grade.tradeback.user.entity.enums.Permission.*;
+import static grade.tradeback.user.entity.enums.Role.*;
 import static org.springframework.http.HttpMethod.*;
 
 @Configuration
