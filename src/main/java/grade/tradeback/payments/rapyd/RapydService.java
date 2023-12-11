@@ -316,9 +316,8 @@ public class RapydService {
         return DepositResponse.builder().checkoutId(checkoutId).build();
     }
 
-    public boolean verifyWebhookSignature(String timestamp, String salt, String signature, WebhookData webhookData) {
-        String urlPath = "https://pixelpact.eu/webhook/catch"; // Get the entire URL path
-        String requestBody = ""; // Get the request body as a JSON string
+    public boolean verifyWebhookSignature(String timestamp, String salt, String signature, String requestBody) {
+        String urlPath = "https://pixelpact.eu/api/webhook/catch"; // Get the entire URL path
 
         // Recreate the string used for signature calculation
         String toEnc = urlPath + salt + timestamp + access_key + secret_key + requestBody;
@@ -327,13 +326,14 @@ public class RapydService {
         String calculatedSignature = hmacDigest(toEnc, secret_key, "HmacSHA256");
 
         // Decode the provided signature from Base64
-        byte[] providedSignatureBytes = Base64.getDecoder().decode(signature);
+        //byte[] providedSignatureBytes = Base64.getDecoder().decode(signature);
 
         // Encode the calculated signature to Base64
         String calculatedSignatureBase64 = Base64.getEncoder().encodeToString(calculatedSignature.getBytes());
 
         // Compare the calculated signature (in Base64) with the provided signature (in Base64)
-
+        System.out.println("my signature: " + calculatedSignatureBase64);
+        System.out.println("signature from webhook: " + signature);
         return calculatedSignatureBase64.equals(signature);
     }
 }

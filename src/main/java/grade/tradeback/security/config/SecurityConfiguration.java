@@ -25,7 +25,8 @@ import static org.springframework.http.HttpMethod.*;
 public class SecurityConfiguration {
     private static final String[] WHITE_LIST = {
             "/auth/**",
-            "/"
+            "/",
+            "/webhook/**"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
