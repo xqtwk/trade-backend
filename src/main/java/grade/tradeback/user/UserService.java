@@ -1,14 +1,24 @@
 package grade.tradeback.user;
 
+import grade.tradeback.payments.transaction.Transaction;
+import grade.tradeback.payments.transaction.TransactionDto;
 import grade.tradeback.user.dto.ChangePasswordRequest;
+import grade.tradeback.user.dto.UserPrivateDataResponse;
 import grade.tradeback.user.entity.User;
+import jakarta.persistence.EntityNotFoundException;
+
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,5 +40,87 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void addTransactionToUser(String username, Transaction newTransaction) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        newTransaction.setUser(user);
+        user.getTransactions().add(newTransaction);
+        //         userRepository.save(user);
+    }
+
+
+    public List<TransactionDto> getTransactionDTOsForUser(User user) {
+        return user.getTransactions().stream()
+                .map(transaction -> new TransactionDto(
+                        transaction.getId(),
+                        transaction.getOperationId(),
+                        transaction.getType(),
+                        transaction.getCheckoutId(),
+                        transaction.getAmount(),
+                        transaction.getStatus()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public UserPrivateDataResponse getPrivateUserData(Principal connectedUser) {
+        User principalUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        User user = userRepository.findByUsername(principalUser.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        Hibernate.initialize(user.getTransactions());
+
+        List<TransactionDto> transactionDTOs = getTransactionDTOsForUser(user);
+
+        return new UserPrivateDataResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole(),
+                user.getBalance(),
+                user.isMfaEnabled(),
+                transactionDTOs
+        );
+    }
+/*
+    public UserPrivateDataResponse getPrivateUserData(Principal connectedUser) {
+        User user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        //System.out.println(user.getTransactions());
+        // Map to DTO
+        return new UserPrivateDataResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole(),
+                user.getBalance(),
+                user.isMfaEnabled()
+        );
+    }*/
+
+
+    public void addBalance(String username, double amount) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setBalance(user.getBalance() + amount);
+            userRepository.save(user);
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+    }
+
+    public void removeBalance(String username, double amount) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            if (user.getBalance() >= amount) {
+                String formatted = String.format("%.2f", user.getBalance() - amount);
+                user.setBalance(Double.parseDouble(formatted));
+                userRepository.save(user);
+            }
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
     }
 }

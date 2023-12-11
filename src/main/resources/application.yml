@@ -1,15 +1,9 @@
-server:
-  port: 8080
-  ssl:
-    key-store: classpath:keystore.p12
-    key-store-password: GtjjskqTeXSUAtnvsVW1XnR5X8Xa30Rn
-    keyStoreType: PKCS12
-    keyAlias: myalias
 spring:
   config:
-    import: stripe.properties, plaid.properties
+    import: stripe.properties, plaid.properties, checkout.properties
   datasource:
     url: jdbc:postgresql://62.72.21.48:5432/u922605802_trade
+    #PRODUCTION url: jdbc:postgresql://postgres-trade:5432/u922605802_trade
     username: u922605802_xqtwk
     password: 3gouwmt#G
     driver-class-name: org.postgresql.Driver
@@ -24,14 +18,6 @@ spring:
   main:
     web-application-type: servlet
 application:
-  plaid:
-    api:
-      url: ${plaid.env}
-      client_id: ${plaid.client_id}
-      secret: ${plaid.secret}
-  stripe:
-    api:
-      key: ${stripe.api.testkey}
   security:
     jwt:
       secret-key: F51836B87EEF55C18A0A33EB8E79B217B77FD3C7F78CE65117ED1F19022BEC0C

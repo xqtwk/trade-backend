@@ -1,4 +1,4 @@
-package grade.tradeback.user.entity;
+package grade.tradeback.user.entity.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

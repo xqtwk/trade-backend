@@ -1,14 +1,14 @@
-package grade.tradeback.payment.plaid;
+package grade.tradeback.payments.rapyd;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
 @Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PublicTokenRequest {
-    private String publicToken;
+public class DepositResponse {
+    private String checkoutId;
 }

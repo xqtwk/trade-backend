@@ -26,7 +26,7 @@ public class SecurityConfiguration {
     private static final String[] WHITE_LIST = {
             "/auth/**",
             "/",
-            "/users/get-public-data/**",
+            "/webhook/**"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;

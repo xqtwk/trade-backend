@@ -2,7 +2,7 @@ package grade.tradeback.user;
 
 import grade.tradeback.user.dto.ChangePasswordRequest;
 import grade.tradeback.user.dto.UserPublicDataRequest;
-import grade.tradeback.user.dto.UserPrivateDataRequest;
+import grade.tradeback.user.dto.UserPrivateDataResponse;
 import grade.tradeback.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,24 +41,17 @@ public class UserController {
     }
 
     @GetMapping("/get-private-data")
-    public ResponseEntity<UserPrivateDataRequest> getPrivateUserData(Principal connectedUser) {
-        User user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        UserPrivateDataRequest userPrivateDataRequest = new UserPrivateDataRequest(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole(),
-                user.getBalance(),
-                user.isMfaEnabled()
-        );
-        return ResponseEntity.ok(userPrivateDataRequest);
+    public ResponseEntity<UserPrivateDataResponse> getPrivateUserData(Principal connectedUser) {
+        UserPrivateDataResponse userPrivateDataResponse = userService.getPrivateUserData(connectedUser);
+        return ResponseEntity.ok(userPrivateDataResponse);
     }
 
 
     @GetMapping("/settings")
-    public ResponseEntity<UserPrivateDataRequest> getUserProfile(Principal principal) {
-        User user = (User) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
-        UserPrivateDataRequest userPrivateDataRequest = new UserPrivateDataRequest(user.getId(), user.getUsername(), user.getEmail(), user.getRole(), user.getBalance(), user.isMfaEnabled());
-        return ResponseEntity.ok(userPrivateDataRequest);
+    public ResponseEntity<UserPrivateDataResponse> getUserProfile(Principal principal) {
+        UserPrivateDataResponse userPrivateDataResponse = userService.getPrivateUserData(principal);
+        return ResponseEntity.ok(userPrivateDataResponse);
     }
+
+
 }
