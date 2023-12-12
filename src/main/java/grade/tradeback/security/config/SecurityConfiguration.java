@@ -26,13 +26,16 @@ public class SecurityConfiguration {
     private static final String[] WHITE_LIST = {
             "/auth/**",
             "/",
-            "/webhook/**"
+            "/webhook/**",
+            "/ws/**",
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
     private final CorsFilter corsFilter;
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

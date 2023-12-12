@@ -10,7 +10,7 @@ import grade.tradeback.security.tfa.TwoFactorAuthenticationService;
 import grade.tradeback.security.jwt.token.Token;
 import grade.tradeback.security.jwt.token.TokenRepository;
 import grade.tradeback.security.jwt.token.TokenType;
-import grade.tradeback.user.entity.Role;
+import grade.tradeback.user.entity.enums.Role;
 import grade.tradeback.user.entity.User;
 import grade.tradeback.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;

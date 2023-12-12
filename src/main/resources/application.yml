@@ -1,4 +1,6 @@
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   config:
     import: stripe.properties, plaid.properties, checkout.properties
   datasource:
@@ -24,3 +26,5 @@ application:
       expiration: 86400000 # a day(24h)
       refresh-token:
         expiration: 604800000 # 7 days(168h)
+server:
+  shutdown: graceful

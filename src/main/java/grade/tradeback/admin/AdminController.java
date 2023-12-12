@@ -1,4 +1,4 @@
-package grade.tradeback.controllers;
+package grade.tradeback.admin;
 
 import org.springframework.web.bind.annotation.*;
 

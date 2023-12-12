@@ -1,6 +1,6 @@
 package grade.tradeback.security.dto;
 
-import grade.tradeback.user.entity.Role;
+import grade.tradeback.user.entity.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
