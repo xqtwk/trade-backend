@@ -1,13 +1,14 @@
-package grade.tradeback.user.dto;
+package grade.tradeback.catalog.game.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserPublicDataRequest {
-    private Long id;
-    private String username;
+public class GameCreationDto {
+    private String name;
 }

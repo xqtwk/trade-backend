@@ -52,6 +52,11 @@ public class WebsocketConfig extends AbstractSecurityWebSocketMessageBrokerConfi
                 .setHandshakeHandler(customHandshakeHandler)
                 .setAllowedOrigins("http://localhost:4200", "https://pixelpact.eu")
                 .withSockJS();
+
+        registry.addEndpoint("/ws/trade")
+                .setHandshakeHandler(customHandshakeHandler)
+                .setAllowedOrigins("http://localhost:4200", "https://pixelpact.eu")
+                .withSockJS();
     }
 
     @Override

@@ -43,12 +43,6 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req.requestMatchers(WHITE_LIST)
                         .permitAll()
-                        .requestMatchers("/management/**").hasAnyRole(ADMIN.name(), MODERATOR.name())
-                        .requestMatchers(GET, "/management/**").hasAnyAuthority(ADMIN_READ.name(), MODERATOR_READ.name())
-                        .requestMatchers(POST, "/management/**").hasAnyAuthority(ADMIN_CREATE.name(), MODERATOR_CREATE.name())
-                        .requestMatchers(PUT, "/management/**").hasAnyAuthority(ADMIN_UPDATE.name(), MODERATOR_UPDATE.name())
-                        .requestMatchers(DELETE, "/management/**").hasAnyAuthority(ADMIN_DELETE.name(), MODERATOR_DELETE.name())
-
                         .requestMatchers("/admin/**").hasRole(ADMIN.name())
                         .requestMatchers(GET, "/admin/**").hasAuthority(ADMIN_READ.name())
                         .requestMatchers(POST, "/admin/**").hasAuthority(ADMIN_CREATE.name())

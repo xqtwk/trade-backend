@@ -1,5 +1,6 @@
 package grade.tradeback.user.entity;
 
+import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.payments.transaction.Transaction;
 import grade.tradeback.security.jwt.token.Token;
 import grade.tradeback.user.entity.enums.Role;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Getter// think about it
+@Getter
 @Setter
 @Builder
 @NoArgsConstructor
@@ -43,7 +44,8 @@ public class User implements UserDetails {
     private List<Transaction> transactions = new ArrayList<>();
 
 
-
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Asset> assets = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
