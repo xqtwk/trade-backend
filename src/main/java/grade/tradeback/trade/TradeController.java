@@ -1,13 +1,17 @@
 package grade.tradeback.trade;
 import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.catalog.asset.AssetService;
-import grade.tradeback.trade.TradeRequestDto;
-import grade.tradeback.chat.chatMessage.ChatMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import grade.tradeback.trade.TradeRequestDto;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -15,7 +19,7 @@ public class TradeController {
     private final SimpMessagingTemplate messagingTemplate;
     private final TradeService tradeService;
     private final AssetService assetService; // Assuming you have a service to handle asset-related operations
-
+    private final TradeRepository tradeRepository;
     @MessageMapping("/trade/initiate")
     public void initiateTrade(TradeRequestDto tradeRequestDto) {
         // Find asset and seller details based on assetId
@@ -34,21 +38,43 @@ public class TradeController {
                     trade  // Send the trade details to the seller
             );
         }
+        // convert method to string and send tradeid to front for redirection
     }
 
 
     @MessageMapping("/trade/confirm")
-    public void confirmTrade(String tradeId, String username) {
-        Trade trade = tradeService.findById(Long.parseLong(tradeId)).orElse(null);
+    public void confirmTrade(TradeConfirmationDto tradeConfirmationDto) {
+        Trade trade = tradeService.findById(tradeConfirmationDto.getTradeId()).orElse(null);
         if (trade != null) {
-            if (trade.getReceiverUsername().equals(username)) {
-                tradeService.confirmReceiver(tradeId);
-            } else if (trade.getSenderUsername().equals(username)) {
-                tradeService.confirmSender(tradeId);
+            System.out.println("Receiver Username: " + trade.getReceiverUsername());
+            System.out.println("DTO Username: " + tradeConfirmationDto.getUsername());
+            if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername())) {
+                System.out.println("first receiver if passed");
+                if (trade.isSenderConfirmed()) {
+                    System.out.println("receiver confirmed");
+                    tradeService.confirmReceiver(tradeConfirmationDto.getTradeId().toString());
+                }
+            } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
+                tradeService.confirmSender(tradeConfirmationDto.getTradeId().toString());
             }
+            System.out.println("no shit passed");
             // Notify both parties about the updated trade state
             messagingTemplate.convertAndSendToUser(trade.getSenderUsername(), "/queue/trade", trade);
             messagingTemplate.convertAndSendToUser(trade.getReceiverUsername(), "/queue/trade", trade);
         }
     }
+
+    @GetMapping("/trade-list/{username}")
+    public ResponseEntity<List<Trade>> getTradeList(Principal currentUser) {
+        List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
+        return ResponseEntity.ok(chatList);
+    }
+
+    @GetMapping("/trade/{id}")
+    public ResponseEntity<TradeResponseDto> getTrade(@PathVariable Long id, Principal currentUser) {
+        return tradeService.getTradeForUser(id, currentUser.getName())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+    }
+
 }
