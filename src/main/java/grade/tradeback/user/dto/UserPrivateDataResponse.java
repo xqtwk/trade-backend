@@ -1,8 +1,7 @@
 package grade.tradeback.user.dto;
 
-import grade.tradeback.payments.transaction.Transaction;
 import grade.tradeback.payments.transaction.TransactionDto;
-import grade.tradeback.user.entity.Role;
+import grade.tradeback.user.entity.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

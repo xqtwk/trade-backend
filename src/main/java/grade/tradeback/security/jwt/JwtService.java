@@ -1,5 +1,6 @@
 package grade.tradeback.security.jwt;
 
+import grade.tradeback.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -57,8 +58,12 @@ public class JwtService {
             UserDetails userDetails,
             long expiration
     ) {
+        User user = (User) userDetails; // trying to add role
+        extraClaims.put("role", user.getRole().toString()); // Add the role to the claims
+
         return Jwts
-                .builder().claims(extraClaims).
+                .builder()
+                .claims(extraClaims).
                 subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
@@ -91,5 +96,13 @@ public class JwtService {
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+    public boolean isWebSocketTokenValid(String token) {
+        try {
+            final Claims claims = extractAllClaims(token);
+            return claims.getExpiration().after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

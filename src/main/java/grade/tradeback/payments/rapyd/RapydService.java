@@ -197,7 +197,7 @@ public class RapydService {
     }
 
 
-    public String createPayout() throws Exception {
+    public String createPayout(String sender, String amount) throws Exception {
         String httpMethod = "post";
         String urlPath = "/v1/payouts";
         String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();

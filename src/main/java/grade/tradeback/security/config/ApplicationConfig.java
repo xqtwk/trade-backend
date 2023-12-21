@@ -68,7 +68,7 @@ public class ApplicationConfig {
         final CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin("https://pixelpact.eu");
-        config.addAllowedOrigin("http://localhost:8080");
+        config.addAllowedOrigin("http://localhost:4200");
         config.setAllowedHeaders(Arrays.asList(
                 ORIGIN,
                 CONTENT_TYPE,

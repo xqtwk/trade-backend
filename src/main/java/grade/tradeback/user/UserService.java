@@ -41,6 +41,11 @@ public class UserService {
 
         userRepository.save(user);
     }
+    public String getUsernameById(Long id) {
+        return userRepository.findById(id)
+                .map(User::getUsername)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
 
     @Transactional
     public void addTransactionToUser(String username, Transaction newTransaction) {

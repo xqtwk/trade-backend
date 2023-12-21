@@ -36,7 +36,9 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
         User user = optionalUser.get();
-        UserPublicDataRequest userPublicDataRequest = new UserPublicDataRequest(user.getUsername());
+        UserPublicDataRequest userPublicDataRequest = new UserPublicDataRequest(
+                user.getId(),
+                user.getUsername());
         return ResponseEntity.ok(userPublicDataRequest);
     }
 

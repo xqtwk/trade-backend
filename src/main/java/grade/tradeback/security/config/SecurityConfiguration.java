@@ -15,8 +15,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.filter.CorsFilter;
 
-import static grade.tradeback.user.entity.Permission.*;
-import static grade.tradeback.user.entity.Role.*;
+import static grade.tradeback.user.entity.enums.Permission.*;
+import static grade.tradeback.user.entity.enums.Role.*;
 import static org.springframework.http.HttpMethod.*;
 
 @Configuration
@@ -26,13 +26,16 @@ public class SecurityConfiguration {
     private static final String[] WHITE_LIST = {
             "/auth/**",
             "/",
-            "/webhook/**"
+            "/webhook/**",
+            "/ws/**",
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
     private final CorsFilter corsFilter;
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -40,12 +43,6 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req.requestMatchers(WHITE_LIST)
                         .permitAll()
-                        .requestMatchers("/management/**").hasAnyRole(ADMIN.name(), MODERATOR.name())
-                        .requestMatchers(GET, "/management/**").hasAnyAuthority(ADMIN_READ.name(), MODERATOR_READ.name())
-                        .requestMatchers(POST, "/management/**").hasAnyAuthority(ADMIN_CREATE.name(), MODERATOR_CREATE.name())
-                        .requestMatchers(PUT, "/management/**").hasAnyAuthority(ADMIN_UPDATE.name(), MODERATOR_UPDATE.name())
-                        .requestMatchers(DELETE, "/management/**").hasAnyAuthority(ADMIN_DELETE.name(), MODERATOR_DELETE.name())
-
                         .requestMatchers("/admin/**").hasRole(ADMIN.name())
                         .requestMatchers(GET, "/admin/**").hasAuthority(ADMIN_READ.name())
                         .requestMatchers(POST, "/admin/**").hasAuthority(ADMIN_CREATE.name())

@@ -1,7 +1,9 @@
 package grade.tradeback.user.entity;
 
+import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.payments.transaction.Transaction;
 import grade.tradeback.security.jwt.token.Token;
+import grade.tradeback.user.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.lang.Nullable;
@@ -12,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Getter// think about it
+@Getter
 @Setter
 @Builder
 @NoArgsConstructor
@@ -23,7 +25,6 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue
     private long id;
-
     private String username;
     private String email;
     private String password;
@@ -42,6 +43,9 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Transaction> transactions = new ArrayList<>();
 
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Asset> assets = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
