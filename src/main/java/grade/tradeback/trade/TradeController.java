@@ -57,16 +57,20 @@ public class TradeController {
             } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
                 tradeService.confirmSender(tradeConfirmationDto.getTradeId().toString());
             }
-            System.out.println("no shit passed");
+            Trade updatedTrade = tradeService.findById(trade.getId()).orElse(null);
+            if (updatedTrade != null) {
+                messagingTemplate.convertAndSendToUser(updatedTrade.getSenderUsername(), "/queue/trade", updatedTrade);
+                messagingTemplate.convertAndSendToUser(updatedTrade.getReceiverUsername(), "/queue/trade", updatedTrade);
+            }
             // Notify both parties about the updated trade state
-            messagingTemplate.convertAndSendToUser(trade.getSenderUsername(), "/queue/trade", trade);
-            messagingTemplate.convertAndSendToUser(trade.getReceiverUsername(), "/queue/trade", trade);
+            //messagingTemplate.convertAndSendToUser(trade.getSenderUsername(), "/queue/trade", trade);
+            //messagingTemplate.convertAndSendToUser(trade.getReceiverUsername(), "/queue/trade", trade);
         }
     }
 
     @GetMapping("/trade-list/{username}")
     public ResponseEntity<List<Trade>> getTradeList(Principal currentUser) {
-        List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
+        List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName() );
         return ResponseEntity.ok(chatList);
     }
 
