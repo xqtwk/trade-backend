@@ -11,4 +11,6 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     @Query("SELECT a FROM Asset a WHERE a.game.name = :gameName")
     List<Asset> findAssetsByGameName(String gameName);
 
+    @Query("SELECT a FROM Asset a WHERE a.user.username = :username")
+    List<Asset> findAssetsByUsername(String username);
 }

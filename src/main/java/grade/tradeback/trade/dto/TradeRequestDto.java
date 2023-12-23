@@ -1,4 +1,4 @@
-package grade.tradeback.trade;
+package grade.tradeback.trade.dto;
 
 import lombok.*;
 
@@ -8,5 +8,5 @@ import lombok.*;
 public class TradeRequestDto {
     private Long buyerUserId; // ID of the buyer
     private Long assetId; // ID of the asset being bought
-    private double amount; // Am
+    private int amount; // Am
 }

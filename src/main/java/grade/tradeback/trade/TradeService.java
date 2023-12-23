@@ -1,5 +1,8 @@
 package grade.tradeback.trade;
 
+import grade.tradeback.catalog.asset.Asset;
+import grade.tradeback.catalog.asset.AssetRepository;
+import grade.tradeback.trade.dto.TradeResponseDto;
 import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +17,8 @@ public class TradeService {
     private final TradeRepository tradeRepository;
     private final UserService userService;
     private final UserRepository userRepository;
-    public Trade createTrade(Long sellerUserId, Long buyerUserId, double amount) {
+    private final AssetRepository assetRepository;
+    public Trade createTrade(Long sellerUserId, Long buyerUserId, int amount, Asset asset) { // changed from double to int there
         // Fetch usernames from user IDs
         String sellerUsername = userService.getUsernameById(sellerUserId);
         String buyerUsername = userService.getUsernameById(buyerUserId);
@@ -23,8 +27,11 @@ public class TradeService {
                 .senderUsername(sellerUsername)
                 .receiverUsername(buyerUsername)
                 .amount(amount)
+                .sum(amount * asset.getPrice())
                 .senderConfirmed(false)
                 .receiverConfirmed(false)
+                .status(TradeStatus.ACTIVE)
+                .asset(asset)
                 .build();
 
         return tradeRepository.save(trade);
@@ -66,7 +73,9 @@ public class TradeService {
                 // trade.getAssetId(),
                 trade.getAmount(),
                 trade.isSenderConfirmed(),
-                trade.isReceiverConfirmed()
+                trade.isReceiverConfirmed(),
+                trade.getStatus(),
+                trade.getAsset()
         ));
     }
 }

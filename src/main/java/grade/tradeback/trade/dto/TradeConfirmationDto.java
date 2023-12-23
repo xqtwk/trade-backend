@@ -1,4 +1,4 @@
-package grade.tradeback.trade;
+package grade.tradeback.trade.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

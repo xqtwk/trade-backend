@@ -37,7 +37,10 @@ public class AssetService {
 
 
 
-    public AssetDetailsDto createAsset(AssetCreationDto dto) {
+    public Optional<AssetDetailsDto> createAsset(AssetCreationDto dto, User connectedUser) {
+        if (connectedUser.getId() != dto.getUserId()) {
+            return Optional.empty(); // Unauthorized
+        }
         Asset asset = new Asset();
         // Set fields from dto
         asset.setName(dto.getName());
@@ -60,13 +63,17 @@ public class AssetService {
         if (user != null) user.getAssets().add(asset);
 
         Asset savedAsset = assetRepository.save(asset);
-        return convertToAssetDetailsDto(savedAsset);
+        return Optional.of(convertToAssetDetailsDto(savedAsset));
     }
 
-    public AssetDetailsDto updateAsset(Long id, AssetCreationDto dto) {
+    public Optional<AssetDetailsDto> updateAsset(Long id, AssetCreationDto dto, User connectedUser) {
+        if (connectedUser.getId() != dto.getUserId()) {
+            return Optional.empty(); // Unauthorized
+        }
+
         Optional<Asset> existingAsset = assetRepository.findById(id);
-        if (!existingAsset.isPresent()) {
-            return null;
+        if (existingAsset.isEmpty()) {
+            return Optional.empty(); // Asset not found
         }
 
         Asset asset = existingAsset.get();
@@ -80,19 +87,29 @@ public class AssetService {
         updateRelatedEntitiesForAsset(asset, dto);
 
         Asset updatedAsset = assetRepository.save(asset);
-        return convertToAssetDetailsDto(updatedAsset);
+        return Optional.of(convertToAssetDetailsDto(updatedAsset));
     }
 
 
-    public void deleteAsset(Long id) {
-        assetRepository.findById(id).ifPresent(asset -> {
-            // Remove the asset from related entities' collections
-            if (asset.getGame() != null) asset.getGame().getAssets().remove(asset);
-            if (asset.getAssetType() != null) asset.getAssetType().getAssets().remove(asset);
-            if (asset.getUser() != null) asset.getUser().getAssets().remove(asset);
+    public boolean deleteAsset(Long id, User connectedUser) {
+        Optional<Asset> assetOptional = assetRepository.findById(id);
 
-            assetRepository.delete(asset);
-        });
+        if (assetOptional.isEmpty()) {
+            return false; // Asset not found
+        }
+
+        Asset asset = assetOptional.get();
+        if (connectedUser.getId() != asset.getUser().getId()) {
+            return false; // Unauthorized
+        }
+
+        // Remove the asset from related entities' collections
+        if (asset.getGame() != null) asset.getGame().getAssets().remove(asset);
+        if (asset.getAssetType() != null) asset.getAssetType().getAssets().remove(asset);
+        if (asset.getUser() != null) asset.getUser().getAssets().remove(asset);
+
+        assetRepository.delete(asset);
+        return true; // Deletion successful
     }
 
     private UserPublicDataRequest convertToUserPublicDataRequest(User user) {
@@ -101,6 +118,12 @@ public class AssetService {
 
     public List<AssetDetailsDto> getAllAssets() {
         return assetRepository.findAll().stream()
+                .map(this::convertToAssetDetailsDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<AssetDetailsDto> getAllUserAssets(String username) {
+        return assetRepository.findAssetsByUsername(username).stream()
                 .map(this::convertToAssetDetailsDto)
                 .collect(Collectors.toList());
     }

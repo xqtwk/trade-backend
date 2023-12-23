@@ -1,6 +1,9 @@
 package grade.tradeback.trade;
 import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.catalog.asset.AssetService;
+import grade.tradeback.trade.dto.TradeConfirmationDto;
+import grade.tradeback.trade.dto.TradeRequestDto;
+import grade.tradeback.trade.dto.TradeResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,17 +29,32 @@ public class TradeController {
         Asset asset = assetService.findById(tradeRequestDto.getAssetId()).orElse(null);
         if (asset != null) {
             // Create a new trade
-            Trade trade = tradeService.createTrade(
-                    asset.getUser().getId(), // Seller's user ID
-                    tradeRequestDto.getBuyerUserId(), // Buyer's user ID
-                    tradeRequestDto.getAmount());
+            if (asset.getAmount() != null && asset.getAmount() >= tradeRequestDto.getAmount()) {
+                Trade trade = tradeService.createTrade(
+                        asset.getUser().getId(), // Seller's user ID
+                        tradeRequestDto.getBuyerUserId(), // Buyer's user ID
+                        tradeRequestDto.getAmount(),
+                        asset);
+                // Notify the seller about the trade request
+                messagingTemplate.convertAndSendToUser(
+                        asset.getUser().getUsername(),
+                        "/queue/trade",
+                        trade  // Send the trade details to the seller
+                );
+            } else if (asset.getAmount() == null) {
+                Trade trade = tradeService.createTrade(
+                        asset.getUser().getId(), // Seller's user ID
+                        tradeRequestDto.getBuyerUserId(), // Buyer's user ID
+                        tradeRequestDto.getAmount(),
+                        asset);
+                // Notify the seller about the trade request
+                messagingTemplate.convertAndSendToUser(
+                        asset.getUser().getUsername(),
+                        "/queue/trade",
+                        trade  // Send the trade details to the seller
+                );
+            }
 
-            // Notify the seller about the trade request
-            messagingTemplate.convertAndSendToUser(
-                    asset.getUser().getUsername(),
-                    "/queue/trade",
-                    trade  // Send the trade details to the seller
-            );
         }
         // convert method to string and send tradeid to front for redirection
     }
@@ -62,9 +80,6 @@ public class TradeController {
                 messagingTemplate.convertAndSendToUser(updatedTrade.getSenderUsername(), "/queue/trade", updatedTrade);
                 messagingTemplate.convertAndSendToUser(updatedTrade.getReceiverUsername(), "/queue/trade", updatedTrade);
             }
-            // Notify both parties about the updated trade state
-            //messagingTemplate.convertAndSendToUser(trade.getSenderUsername(), "/queue/trade", trade);
-            //messagingTemplate.convertAndSendToUser(trade.getReceiverUsername(), "/queue/trade", trade);
         }
     }
 
