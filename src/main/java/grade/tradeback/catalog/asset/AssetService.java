@@ -41,6 +41,15 @@ public class AssetService {
         if (connectedUser.getId() != dto.getUserId()) {
             return Optional.empty(); // Unauthorized
         }
+
+        Game game = gameRepository.findById(dto.getGameId()).orElse(null);
+        AssetType assetType = assetTypeRepository.findById(dto.getAssetTypeId()).orElse(null);
+
+        // Check if assetType is related to the game
+        if (game == null || assetType == null || !game.getAssetTypes().contains(assetType)) {
+            return Optional.empty(); // Game not found, AssetType not found, or AssetType not related to Game
+        }
+
         Asset asset = new Asset();
         // Set fields from dto
         asset.setName(dto.getName());
@@ -48,19 +57,13 @@ public class AssetService {
         asset.setPrice(dto.getPrice());
         asset.setAmount(dto.getAmount());
 
-        // Fetch and set related entities
-        Game game = gameRepository.findById(dto.getGameId()).orElse(null);
-        AssetType assetType = assetTypeRepository.findById(dto.getAssetTypeId()).orElse(null);
-        User user = userRepository.findById(dto.getUserId()).orElse(null);
-
         asset.setGame(game);
         asset.setAssetType(assetType);
-        asset.setUser(user);
+        asset.setUser(userRepository.findById(dto.getUserId()).orElse(null));
 
         // Update lists in related entities
-        if (game != null) game.getAssets().add(asset);
-        if (assetType != null) assetType.getAssets().add(asset);
-        if (user != null) user.getAssets().add(asset);
+        game.getAssets().add(asset);
+        assetType.getAssets().add(asset);
 
         Asset savedAsset = assetRepository.save(asset);
         return Optional.of(convertToAssetDetailsDto(savedAsset));
