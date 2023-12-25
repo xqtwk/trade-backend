@@ -116,10 +116,6 @@ public class UserService {
 
             if (currentBalance.compareTo(amountToRemove) >= 0) {
                 BigDecimal newBalance = currentBalance.subtract(amountToRemove).setScale(2, RoundingMode.HALF_DOWN);
-
-               /* String formatted = String.format("%.2f", user.getBalance() - amount);
-                user.setBalance(Double.parseDouble(formatted));
-                userRepository.save(user);*/
                 user.setBalance(newBalance.doubleValue());
                 userRepository.save(user);
             }

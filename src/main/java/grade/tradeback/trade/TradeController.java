@@ -37,8 +37,10 @@ public class TradeController {
             }
             if (asset.getAmount() == null || asset.getAmount() >= tradeRequestDto.getAmount()) {
                 Trade trade = tradeService.createAndSaveTrade(asset, tradeRequestDto);
-                tradeService.notifySellerAboutTrade(trade);
-                tradeService.sendTradeIdToBuyer(principal.getName(), trade.getId());
+                if (trade != null) {
+                    tradeService.notifySellerAboutTrade(trade);
+                    tradeService.sendTradeIdToBuyer(principal.getName(), trade.getId());
+                }
             }
         }
     }

@@ -7,6 +7,7 @@ import grade.tradeback.trade.dto.TradeResponseDto;
 import grade.tradeback.trade.dto.TradeConfirmationDto;
 import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.UserService;
+import grade.tradeback.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -20,9 +21,23 @@ public class TradeService {
     private final TradeRepository tradeRepository;
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
 
     public Trade createAndSaveTrade(Asset asset, TradeRequestDto tradeRequestDto) {
         String sellerUsername = userService.getUsernameById(asset.getUser().getId());
+        String buyerUsername = userService.getUsernameById(tradeRequestDto.getBuyerUserId());
+        double totalCost = tradeRequestDto.getAmount() * asset.getPrice();
+        User buyer = userRepository.findById(tradeRequestDto.getBuyerUserId()).orElse(null);
+        if (buyer == null || buyer.getBalance() <= totalCost) {
+            sendErrorMessage(buyerUsername, "Lėsų skaičius balanse nepakankamas.");
+            return null; // Return or handle as appropriate
+        }
+        try {
+            userService.removeBalance(buyerUsername, totalCost);
+        } catch (IllegalArgumentException e) {
+            sendErrorMessage(buyerUsername, e.getMessage());
+            return null; // Return or handle as appropriate
+        }
         Trade trade = Trade.builder()
                 .senderUsername(sellerUsername)
                 .receiverUsername(userService.getUsernameById(tradeRequestDto.getBuyerUserId()))
@@ -51,13 +66,16 @@ public class TradeService {
     public void confirmTrade(TradeConfirmationDto tradeConfirmationDto) {
         Trade trade = findById(tradeConfirmationDto.getTradeId()).orElse(null);
         if (trade != null) {
-            if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername()) && trade.isSenderConfirmed()) {
-                confirmReceiver(trade.getId().toString());
-            } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
-                confirmSender(trade.getId().toString());
-            }
+            TradeStatus status = trade.getStatus();
+            if (status != TradeStatus.COMPLETED && status != TradeStatus.CANCELLED) {
+                if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername()) && trade.isSenderConfirmed()) {
+                    confirmReceiver(trade.getId().toString());
+                } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
+                    confirmSender(trade.getId().toString());
+                }
 
-            findById(trade.getId()).ifPresent(this::notifyTradeUpdate);
+                findById(trade.getId()).ifPresent(this::notifyTradeUpdate);
+            }
         }
     }
 
@@ -70,6 +88,7 @@ public class TradeService {
         return tradeRepository.findById(Long.parseLong(tradeId)).map(trade -> {
             if (trade.isSenderConfirmed()) {  // Ensure receiver has already confirmed
                 trade.setReceiverConfirmed(true);
+                trade.setStatus(TradeStatus.COMPLETED);
                 userService.addBalance(trade.getSenderUsername(), trade.getAmount());
             }
             return tradeRepository.save(trade);

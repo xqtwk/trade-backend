@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import grade.tradeback.catalog.game.GameConverter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,9 +56,10 @@ public class AssetService {
         // Set fields from dto
         asset.setName(dto.getName());
         asset.setDescription(dto.getDescription());
-        asset.setPrice(dto.getPrice());
-        asset.setAmount(dto.getAmount());
+        BigDecimal roundedPrice = BigDecimal.valueOf(dto.getPrice()).setScale(2, RoundingMode.HALF_DOWN);
+        asset.setPrice(roundedPrice.doubleValue());
 
+        asset.setAmount(dto.getAmount());
         asset.setGame(game);
         asset.setAssetType(assetType);
         asset.setUser(userRepository.findById(dto.getUserId()).orElse(null));
@@ -83,7 +86,10 @@ public class AssetService {
         // Update fields from dto
         asset.setName(dto.getName());
         asset.setDescription(dto.getDescription());
-        asset.setPrice(dto.getPrice());
+
+        BigDecimal roundedPrice = BigDecimal.valueOf(dto.getPrice()).setScale(2, RoundingMode.HALF_DOWN);
+        asset.setPrice(roundedPrice.doubleValue());
+
         asset.setAmount(dto.getAmount());
 
         // Update related entities if they change
