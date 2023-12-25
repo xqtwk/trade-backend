@@ -19,27 +19,7 @@ import java.util.Optional;
 public class TradeService {
     private final TradeRepository tradeRepository;
     private final UserService userService;
-    private final UserRepository userRepository;
-    private final AssetRepository assetRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    /*public Trade createTrade(Long sellerUserId, Long buyerUserId, int amount, Asset asset) { // changed from double to int there
-        // Fetch usernames from user IDs
-        String sellerUsername = userService.getUsernameById(sellerUserId);
-        String buyerUsername = userService.getUsernameById(buyerUserId);
-
-        Trade trade = Trade.builder()
-                .senderUsername(sellerUsername)
-                .receiverUsername(buyerUsername)
-                .amount(amount)
-                .sum(amount * asset.getPrice())
-                .senderConfirmed(false)
-                .receiverConfirmed(false)
-                .status(TradeStatus.ACTIVE)
-                .asset(asset)
-                .build();
-
-        return tradeRepository.save(trade);
-    }*/
 
     public Trade createAndSaveTrade(Asset asset, TradeRequestDto tradeRequestDto) {
         String sellerUsername = userService.getUsernameById(asset.getUser().getId());
