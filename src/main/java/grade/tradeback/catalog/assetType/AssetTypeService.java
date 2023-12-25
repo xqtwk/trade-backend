@@ -33,7 +33,8 @@ public class AssetTypeService {
 
         Game game = gameRepository.findById(dto.getGameId()).orElse(null);
         assetType.setGame(game);
-
+        System.out.println("type: " + dto.getType());
+        assetType.setType(dto.getType());
         // Update list in related entity
         if (game != null) game.getAssetTypes().add(assetType);
 
