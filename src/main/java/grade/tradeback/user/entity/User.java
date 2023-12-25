@@ -1,5 +1,6 @@
 package grade.tradeback.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.payments.transaction.Transaction;
 import grade.tradeback.security.jwt.token.Token;
@@ -45,6 +46,7 @@ public class User implements UserDetails {
 
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Asset> assets = new ArrayList<>();
 
     @Override

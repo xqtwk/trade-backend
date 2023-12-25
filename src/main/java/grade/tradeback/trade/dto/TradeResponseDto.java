@@ -17,5 +17,5 @@ public class TradeResponseDto {
     private boolean senderConfirmed;
     private boolean receiverConfirmed;
     private TradeStatus status;
-    private Asset asset;
+    private Long assetId; // Just the ID, instead of the whole Asset entity
 }

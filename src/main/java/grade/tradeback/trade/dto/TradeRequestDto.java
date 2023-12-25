@@ -1,5 +1,6 @@
 package grade.tradeback.trade.dto;
 
+import grade.tradeback.trade.TradeStatus;
 import lombok.*;
 
 @Data

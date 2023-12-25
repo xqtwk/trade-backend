@@ -4,10 +4,12 @@ import grade.tradeback.catalog.asset.AssetService;
 import grade.tradeback.trade.dto.TradeConfirmationDto;
 import grade.tradeback.trade.dto.TradeRequestDto;
 import grade.tradeback.trade.dto.TradeResponseDto;
+import grade.tradeback.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,40 +25,21 @@ public class TradeController {
     private final TradeService tradeService;
     private final AssetService assetService; // Assuming you have a service to handle asset-related operations
     private final TradeRepository tradeRepository;
+    private final UserService userService;
     @MessageMapping("/trade/initiate")
-    public void initiateTrade(TradeRequestDto tradeRequestDto) {
-        // Find asset and seller details based on assetId
+    public void initiateTrade(TradeRequestDto tradeRequestDto, Principal principal) {
         Asset asset = assetService.findById(tradeRequestDto.getAssetId()).orElse(null);
         if (asset != null) {
-            // Create a new trade
-            if (asset.getAmount() != null && asset.getAmount() >= tradeRequestDto.getAmount()) {
-                Trade trade = tradeService.createTrade(
-                        asset.getUser().getId(), // Seller's user ID
-                        tradeRequestDto.getBuyerUserId(), // Buyer's user ID
-                        tradeRequestDto.getAmount(),
-                        asset);
-                // Notify the seller about the trade request
-                messagingTemplate.convertAndSendToUser(
-                        asset.getUser().getUsername(),
-                        "/queue/trade",
-                        trade  // Send the trade details to the seller
-                );
-            } else if (asset.getAmount() == null) {
-                Trade trade = tradeService.createTrade(
-                        asset.getUser().getId(), // Seller's user ID
-                        tradeRequestDto.getBuyerUserId(), // Buyer's user ID
-                        tradeRequestDto.getAmount(),
-                        asset);
-                // Notify the seller about the trade request
-                messagingTemplate.convertAndSendToUser(
-                        asset.getUser().getUsername(),
-                        "/queue/trade",
-                        trade  // Send the trade details to the seller
-                );
+            if (asset.getUser().getId() == tradeRequestDto.getBuyerUserId()) {
+                tradeService.sendErrorMessage(principal.getName(), "Deja, negalima pirkti savo pačių pateiktos prekės.");
+                return;
             }
-
+            if (asset.getAmount() == null || asset.getAmount() >= tradeRequestDto.getAmount()) {
+                Trade trade = tradeService.createAndSaveTrade(asset, tradeRequestDto);
+                tradeService.notifySellerAboutTrade(trade);
+                tradeService.sendTradeIdToBuyer(principal.getName(), trade.getId());
+            }
         }
-        // convert method to string and send tradeid to front for redirection
     }
 
 
@@ -85,7 +68,7 @@ public class TradeController {
 
     @GetMapping("/trade-list/{username}")
     public ResponseEntity<List<Trade>> getTradeList(Principal currentUser) {
-        List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName() );
+        List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
         return ResponseEntity.ok(chatList);
     }
 

@@ -1,6 +1,7 @@
 package grade.tradeback.trade;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import grade.tradeback.catalog.asset.Asset;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ public class Trade {
     private double sum;
     @ManyToOne
     @JoinColumn(name = "asset_id")
+    @JsonBackReference
     private Asset asset;
 
     @Enumerated(EnumType.STRING)
