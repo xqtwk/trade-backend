@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -24,17 +25,20 @@ public class ChatController {
 
     @MessageMapping("/chat")
     public void processMessage(@Payload ChatMessage chatMessage) {
-        System.out.println("chat caught");
-        ChatMessage savedMsg = chatMessageService.save(chatMessage);
-        messagingTemplate.convertAndSendToUser(
-                chatMessage.getRecipientUsername(), "/queue/messages",
-                new ChatNotification(
-                        savedMsg.getId(),
-                        savedMsg.getSenderUsername(),
-                        savedMsg.getRecipientUsername(),
-                        savedMsg.getContent()
-                )
-        );
+        if (!Objects.equals(chatMessage.getRecipientUsername(), chatMessage.getSenderUsername())) {
+            ChatMessage savedMsg = chatMessageService.save(chatMessage);
+            messagingTemplate.convertAndSendToUser(
+                    chatMessage.getRecipientUsername(), "/queue/messages",
+                    new ChatNotification(
+                            savedMsg.getId(),
+                            savedMsg.getSenderUsername(),
+                            savedMsg.getRecipientUsername(),
+                            savedMsg.getContent()
+                    )
+            );
+        } else {
+            messagingTemplate.convertAndSendToUser(chatMessage.getSenderUsername(), "/queue/errors", "Negalima siųsti žinutę sau");
+        }
     }
 
     @GetMapping("/messages/{senderUsername}/{recipientUsername}")
