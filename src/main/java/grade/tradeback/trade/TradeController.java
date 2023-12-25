@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -44,25 +45,9 @@ public class TradeController {
 
 
     @MessageMapping("/trade/confirm")
-    public void confirmTrade(TradeConfirmationDto tradeConfirmationDto) {
-        Trade trade = tradeService.findById(tradeConfirmationDto.getTradeId()).orElse(null);
-        if (trade != null) {
-            System.out.println("Receiver Username: " + trade.getReceiverUsername());
-            System.out.println("DTO Username: " + tradeConfirmationDto.getUsername());
-            if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername())) {
-                System.out.println("first receiver if passed");
-                if (trade.isSenderConfirmed()) {
-                    System.out.println("receiver confirmed");
-                    tradeService.confirmReceiver(tradeConfirmationDto.getTradeId().toString());
-                }
-            } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
-                tradeService.confirmSender(tradeConfirmationDto.getTradeId().toString());
-            }
-            Trade updatedTrade = tradeService.findById(trade.getId()).orElse(null);
-            if (updatedTrade != null) {
-                messagingTemplate.convertAndSendToUser(updatedTrade.getSenderUsername(), "/queue/trade", updatedTrade);
-                messagingTemplate.convertAndSendToUser(updatedTrade.getReceiverUsername(), "/queue/trade", updatedTrade);
-            }
+    public void confirmTrade(TradeConfirmationDto tradeConfirmationDto, Principal connectedUser) {
+        if (Objects.equals(connectedUser.getName(), tradeConfirmationDto.getUsername())) {
+            tradeService.confirmTrade(tradeConfirmationDto);
         }
     }
 

@@ -4,6 +4,7 @@ import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.catalog.asset.AssetRepository;
 import grade.tradeback.trade.dto.TradeRequestDto;
 import grade.tradeback.trade.dto.TradeResponseDto;
+import grade.tradeback.trade.dto.TradeConfirmationDto;
 import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +66,24 @@ public class TradeService {
 
     public void sendErrorMessage(String username, String errorMessage) {
         messagingTemplate.convertAndSendToUser(username, "/queue/errors", errorMessage);
+    }
+
+    public void confirmTrade(TradeConfirmationDto tradeConfirmationDto) {
+        Trade trade = findById(tradeConfirmationDto.getTradeId()).orElse(null);
+        if (trade != null) {
+            if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername()) && trade.isSenderConfirmed()) {
+                confirmReceiver(trade.getId().toString());
+            } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
+                confirmSender(trade.getId().toString());
+            }
+
+            findById(trade.getId()).ifPresent(this::notifyTradeUpdate);
+        }
+    }
+
+    private void notifyTradeUpdate(Trade updatedTrade) {
+        messagingTemplate.convertAndSendToUser(updatedTrade.getSenderUsername(), "/queue/trade", updatedTrade);
+        messagingTemplate.convertAndSendToUser(updatedTrade.getReceiverUsername(), "/queue/trade", updatedTrade);
     }
 
     public Optional<Trade> confirmReceiver(String tradeId) {
