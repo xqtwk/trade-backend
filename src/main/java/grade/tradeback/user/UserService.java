@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,27 +90,17 @@ public class UserService {
                 transactionDTOs
         );
     }
-/*
-    public UserPrivateDataResponse getPrivateUserData(Principal connectedUser) {
-        User user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        //System.out.println(user.getTransactions());
-        // Map to DTO
-        return new UserPrivateDataResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole(),
-                user.getBalance(),
-                user.isMfaEnabled()
-        );
-    }*/
-
 
     public void addBalance(String username, double amount) {
         Optional<User> userOptional = userRepository.findByUsername(username);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setBalance(user.getBalance() + amount);
+
+            BigDecimal currentBalance = BigDecimal.valueOf(user.getBalance());
+            BigDecimal amountToAdd = BigDecimal.valueOf(amount);
+            BigDecimal newBalance = currentBalance.add(amountToAdd).setScale(2, RoundingMode.HALF_DOWN);
+
+            user.setBalance(newBalance.doubleValue());
             userRepository.save(user);
         } else {
             throw new IllegalArgumentException("User not found");
@@ -119,10 +111,20 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            if (user.getBalance() >= amount) {
-                String formatted = String.format("%.2f", user.getBalance() - amount);
+            BigDecimal currentBalance = BigDecimal.valueOf(user.getBalance());
+            BigDecimal amountToRemove = BigDecimal.valueOf(amount);
+
+            if (currentBalance.compareTo(amountToRemove) >= 0) {
+                BigDecimal newBalance = currentBalance.subtract(amountToRemove).setScale(2, RoundingMode.HALF_DOWN);
+
+               /* String formatted = String.format("%.2f", user.getBalance() - amount);
                 user.setBalance(Double.parseDouble(formatted));
+                userRepository.save(user);*/
+                user.setBalance(newBalance.doubleValue());
                 userRepository.save(user);
+            }
+            else {
+                throw new IllegalArgumentException("Insufficient balance");
             }
         } else {
             throw new IllegalArgumentException("User not found");
