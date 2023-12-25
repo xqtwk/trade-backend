@@ -2,6 +2,7 @@ package grade.tradeback.catalog.asset;
 
 import grade.tradeback.catalog.game.Game;
 import grade.tradeback.catalog.assetType.AssetType;
+import grade.tradeback.trade.Trade;
 import grade.tradeback.user.entity.User;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
@@ -9,6 +10,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -32,6 +36,9 @@ public class Asset {
     @ManyToOne
     @JoinColumn(name = "user_id")
     User user;
+
+    @OneToMany(mappedBy = "asset", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    private List<Trade> tradeList = new ArrayList<>();
 
     private String name;
 

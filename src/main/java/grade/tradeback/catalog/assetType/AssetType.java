@@ -26,7 +26,8 @@ public class AssetType {
     @ManyToOne
     @JoinColumn(name = "game_id")
     private Game game;
-
+    @Enumerated(EnumType.STRING)
+    private AssetTypeType type;
     @OneToMany(mappedBy = "assetType", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Asset> assets = new ArrayList<>();
 }

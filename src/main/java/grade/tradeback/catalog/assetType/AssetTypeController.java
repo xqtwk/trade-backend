@@ -29,6 +29,8 @@ public class AssetTypeController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+
     @GetMapping("/game/{gameName}")
     public ResponseEntity<List<AssetTypeDetailsDto>> getAssetTypesByGameName(@PathVariable String gameName) {
         List<AssetTypeDetailsDto> assetTypes = assetTypeService.getAssetTypesByGameName(gameName);

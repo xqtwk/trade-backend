@@ -1,8 +1,14 @@
 package grade.tradeback.trade;
 
+import grade.tradeback.catalog.asset.Asset;
+import grade.tradeback.catalog.asset.AssetRepository;
+import grade.tradeback.trade.dto.TradeRequestDto;
+import grade.tradeback.trade.dto.TradeResponseDto;
+import grade.tradeback.trade.dto.TradeConfirmationDto;
 import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,21 +19,51 @@ import java.util.Optional;
 public class TradeService {
     private final TradeRepository tradeRepository;
     private final UserService userService;
-    private final UserRepository userRepository;
-    public Trade createTrade(Long sellerUserId, Long buyerUserId, double amount) {
-        // Fetch usernames from user IDs
-        String sellerUsername = userService.getUsernameById(sellerUserId);
-        String buyerUsername = userService.getUsernameById(buyerUserId);
+    private final SimpMessagingTemplate messagingTemplate;
 
+    public Trade createAndSaveTrade(Asset asset, TradeRequestDto tradeRequestDto) {
+        String sellerUsername = userService.getUsernameById(asset.getUser().getId());
         Trade trade = Trade.builder()
                 .senderUsername(sellerUsername)
-                .receiverUsername(buyerUsername)
-                .amount(amount)
+                .receiverUsername(userService.getUsernameById(tradeRequestDto.getBuyerUserId()))
+                .amount(tradeRequestDto.getAmount())
+                .sum(tradeRequestDto.getAmount() * asset.getPrice())
                 .senderConfirmed(false)
                 .receiverConfirmed(false)
+                .status(TradeStatus.ACTIVE)
+                .asset(asset)
                 .build();
-
         return tradeRepository.save(trade);
+    }
+
+    public void notifySellerAboutTrade(Trade trade) {
+        messagingTemplate.convertAndSendToUser(trade.getSenderUsername(), "/queue/trade", trade);
+    }
+
+    public void sendTradeIdToBuyer(String buyerUsername, Long tradeId) {
+        messagingTemplate.convertAndSendToUser(buyerUsername, "/queue/trade-initiation", tradeId.toString());
+    }
+
+    public void sendErrorMessage(String username, String errorMessage) {
+        messagingTemplate.convertAndSendToUser(username, "/queue/errors", errorMessage);
+    }
+
+    public void confirmTrade(TradeConfirmationDto tradeConfirmationDto) {
+        Trade trade = findById(tradeConfirmationDto.getTradeId()).orElse(null);
+        if (trade != null) {
+            if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername()) && trade.isSenderConfirmed()) {
+                confirmReceiver(trade.getId().toString());
+            } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
+                confirmSender(trade.getId().toString());
+            }
+
+            findById(trade.getId()).ifPresent(this::notifyTradeUpdate);
+        }
+    }
+
+    private void notifyTradeUpdate(Trade updatedTrade) {
+        messagingTemplate.convertAndSendToUser(updatedTrade.getSenderUsername(), "/queue/trade", updatedTrade);
+        messagingTemplate.convertAndSendToUser(updatedTrade.getReceiverUsername(), "/queue/trade", updatedTrade);
     }
 
     public Optional<Trade> confirmReceiver(String tradeId) {
@@ -66,7 +102,9 @@ public class TradeService {
                 // trade.getAssetId(),
                 trade.getAmount(),
                 trade.isSenderConfirmed(),
-                trade.isReceiverConfirmed()
+                trade.isReceiverConfirmed(),
+                trade.getStatus(),
+                trade.getAsset().getId()
         ));
     }
 }
