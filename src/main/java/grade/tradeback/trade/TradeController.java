@@ -35,12 +35,21 @@ public class TradeController {
                 tradeService.sendErrorMessage(principal.getName(), "Deja, negalima pirkti savo pačių pateiktos prekės.");
                 return;
             }
-            if (asset.getAmount() == null || asset.getAmount() >= tradeRequestDto.getAmount()) {
+            if (tradeRequestDto.getAmount() <= 0) {
+                tradeService.sendErrorMessage(principal.getName(), "Neteisingas kiekis");
+                return;
+            }
+            if (
+                asset.getAmount() == null
+                || asset.getAmount() >= tradeRequestDto.getAmount()
+            ) {
                 Trade trade = tradeService.createAndSaveTrade(asset, tradeRequestDto);
                 if (trade != null) {
                     tradeService.notifySellerAboutTrade(trade);
                     tradeService.sendTradeIdToBuyer(principal.getName(), trade.getId());
                 }
+            } else {
+                tradeService.sendErrorMessage(principal.getName(), "Neteisingas kiekis");
             }
         }
     }

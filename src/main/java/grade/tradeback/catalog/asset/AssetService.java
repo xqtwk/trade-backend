@@ -11,6 +11,7 @@ import grade.tradeback.catalog.game.Game;
 import grade.tradeback.catalog.game.GameRepository;
 import grade.tradeback.catalog.game.GameService;
 import grade.tradeback.catalog.game.dto.GameDetailsDto;
+import grade.tradeback.trade.TradeStatus;
 import grade.tradeback.user.UserRepository;
 import grade.tradeback.user.UserService;
 import grade.tradeback.user.dto.UserPublicDataRequest;
@@ -43,7 +44,6 @@ public class AssetService {
         if (connectedUser.getId() != dto.getUserId()) {
             return Optional.empty(); // Unauthorized
         }
-
         Game game = gameRepository.findById(dto.getGameId()).orElse(null);
         AssetType assetType = assetTypeRepository.findById(dto.getAssetTypeId()).orElse(null);
 
@@ -76,12 +76,13 @@ public class AssetService {
         if (connectedUser.getId() != dto.getUserId()) {
             return Optional.empty(); // Unauthorized
         }
-
         Optional<Asset> existingAsset = assetRepository.findById(id);
         if (existingAsset.isEmpty()) {
             return Optional.empty(); // Asset not found
         }
-
+        if (hasActiveOrIssueTrades(existingAsset)) {
+            return Optional.empty(); // Cannot update asset with active or issue trades
+        }
         Asset asset = existingAsset.get();
         // Update fields from dto
         asset.setName(dto.getName());
@@ -99,6 +100,11 @@ public class AssetService {
         return Optional.of(convertToAssetDetailsDto(updatedAsset));
     }
 
+    public boolean hasActiveOrIssueTrades(Optional<Asset> assetOptional) {
+        return assetOptional.map(asset -> asset.getTradeList().stream()
+                .anyMatch(trade -> trade.getStatus() == TradeStatus.ACTIVE || trade.getStatus() == TradeStatus.ISSUE))
+                .orElse(false);
+    }
 
     public boolean deleteAsset(Long id, User connectedUser) {
         Optional<Asset> assetOptional = assetRepository.findById(id);
@@ -106,7 +112,6 @@ public class AssetService {
         if (assetOptional.isEmpty()) {
             return false; // Asset not found
         }
-
         Asset asset = assetOptional.get();
         if (connectedUser.getId() != asset.getUser().getId()) {
             return false; // Unauthorized
@@ -140,6 +145,32 @@ public class AssetService {
     public Optional<AssetDetailsDto> getAssetById(Long id) {
         return assetRepository.findById(id)
                 .map(this::convertToAssetDetailsDto);
+    }
+    public void decreaseAssetAmount(Long assetId, int amountToDecrease) throws IllegalArgumentException {
+        Asset asset = assetRepository.findAssetById(assetId)
+                .orElseThrow(() -> new IllegalArgumentException("Asset not found"));
+
+        Integer currentAmount = asset.getAmount();
+        if (currentAmount == null || currentAmount < amountToDecrease) {
+            throw new IllegalArgumentException("Insufficient asset amount available");
+        }
+
+        asset.setAmount(currentAmount - amountToDecrease);
+        assetRepository.save(asset);
+    }
+
+    // Method to increase the amount of an asset
+    public void increaseAssetAmount(Long assetId, int amountToIncrease) {
+        Asset asset = assetRepository.findAssetById(assetId)
+                .orElseThrow(() -> new IllegalArgumentException("Asset not found"));
+
+        Integer currentAmount = asset.getAmount();
+        if (currentAmount == null) {
+            currentAmount = 0;
+        }
+
+        asset.setAmount(currentAmount + amountToIncrease);
+        assetRepository.save(asset);
     }
 
     private void updateRelatedEntitiesForAsset(Asset asset, AssetCreationDto dto) {

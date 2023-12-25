@@ -16,6 +16,7 @@ public class TradeResponseDto {
     private int amount;
     private boolean senderConfirmed;
     private boolean receiverConfirmed;
+    private double sum;
     private TradeStatus status;
     private Long assetId; // Just the ID, instead of the whole Asset entity
 }

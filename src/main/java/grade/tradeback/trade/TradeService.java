@@ -2,6 +2,7 @@ package grade.tradeback.trade;
 
 import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.catalog.asset.AssetRepository;
+import grade.tradeback.catalog.asset.AssetService;
 import grade.tradeback.trade.dto.TradeRequestDto;
 import grade.tradeback.trade.dto.TradeResponseDto;
 import grade.tradeback.trade.dto.TradeConfirmationDto;
@@ -22,6 +23,7 @@ public class TradeService {
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
+    private final AssetService assetService;
 
     public Trade createAndSaveTrade(Asset asset, TradeRequestDto tradeRequestDto) {
         String sellerUsername = userService.getUsernameById(asset.getUser().getId());
@@ -34,6 +36,9 @@ public class TradeService {
         }
         try {
             userService.removeBalance(buyerUsername, totalCost);
+            if (asset.getAmount() != null) {
+                assetService.decreaseAssetAmount(asset.getId(), tradeRequestDto.getAmount());
+            }
         } catch (IllegalArgumentException e) {
             sendErrorMessage(buyerUsername, e.getMessage());
             return null; // Return or handle as appropriate
@@ -122,6 +127,7 @@ public class TradeService {
                 trade.getAmount(),
                 trade.isSenderConfirmed(),
                 trade.isReceiverConfirmed(),
+                trade.getSum(),
                 trade.getStatus(),
                 trade.getAsset().getId()
         ));
