@@ -108,7 +108,7 @@ public class TradeService {
 
     public Optional<Trade> confirmSender(String tradeId) {
         return tradeRepository.findById(Long.parseLong(tradeId)).map(trade -> {
-                trade.setSenderConfirmed(true);
+            trade.setSenderConfirmed(true);
             return tradeRepository.save(trade);
         });
     }
@@ -118,8 +118,26 @@ public class TradeService {
         if (trade != null) {
             TradeStatus status = trade.getStatus();
             if (status != TradeStatus.COMPLETED && status != TradeStatus.CANCELLED) {
+                if (trade.getAsset().getAssetType().getType().equals(AssetTypeType.ITEM)) {
+                    if (trade.getReceiverUsername().equals(tradeCancellationDto.getUsername())
+                        && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30) {
+                        trade.setStatus(TradeStatus.CANCELLED);
+                        userService.addBalance(trade.getReceiverUsername(), trade.getSum());
+                        tradeRepository.save(trade);
+                        assetService.increaseAssetAmount(trade.getAsset().getId(), trade.getAmount());
+                    }
+                } else if (trade.getAsset().getAssetType().getType().equals(AssetTypeType.SERVICE)) {
+                    if (trade.getReceiverUsername().equals(tradeCancellationDto.getUsername())
+                        && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30
+                        && !trade.isSenderConfirmed()) {
+                        trade.setStatus(TradeStatus.CANCELLED);
+                        userService.addBalance(trade.getReceiverUsername(), trade.getSum());
+                        tradeRepository.save(trade);
+                        assetService.increaseAssetAmount(trade.getAsset().getId(), trade.getAmount());
+                    }
+                }
                 if (trade.getReceiverUsername().equals(tradeCancellationDto.getUsername())
-                && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30
+                    && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30
                     && trade.getAsset().getAssetType().getType().equals(AssetTypeType.ITEM)) {
                     trade.setStatus(TradeStatus.CANCELLED);
                     userService.addBalance(trade.getReceiverUsername(), trade.getSum());
