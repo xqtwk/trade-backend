@@ -3,6 +3,7 @@ package grade.tradeback.trade;
 import grade.tradeback.catalog.asset.Asset;
 import grade.tradeback.catalog.asset.AssetRepository;
 import grade.tradeback.catalog.asset.AssetService;
+import grade.tradeback.catalog.assetType.AssetTypeType;
 import grade.tradeback.trade.dto.TradeRequestDto;
 import grade.tradeback.trade.dto.TradeResponseDto;
 import grade.tradeback.trade.dto.TradeConfirmationDto;
@@ -13,6 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +29,7 @@ public class TradeService {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
     private final AssetService assetService;
+    private final AssetRepository assetRepository;
 
     public Trade createAndSaveTrade(Asset asset, TradeRequestDto tradeRequestDto) {
         String sellerUsername = userService.getUsernameById(asset.getUser().getId());
@@ -94,7 +100,7 @@ public class TradeService {
             if (trade.isSenderConfirmed()) {  // Ensure receiver has already confirmed
                 trade.setReceiverConfirmed(true);
                 trade.setStatus(TradeStatus.COMPLETED);
-                userService.addBalance(trade.getSenderUsername(), trade.getAmount());
+                userService.addBalance(trade.getSenderUsername(), trade.getSum());
             }
             return tradeRepository.save(trade);
         });
@@ -106,6 +112,31 @@ public class TradeService {
             return tradeRepository.save(trade);
         });
     }
+
+    public void cancelTrade(TradeConfirmationDto tradeCancellationDto) {
+        Trade trade = tradeRepository.findById(tradeCancellationDto.getTradeId()).orElse(null);
+        if (trade != null) {
+            TradeStatus status = trade.getStatus();
+            if (status != TradeStatus.COMPLETED && status != TradeStatus.CANCELLED) {
+                if (trade.getReceiverUsername().equals(tradeCancellationDto.getUsername())
+                && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30
+                    && trade.getAsset().getAssetType().getType().equals(AssetTypeType.ITEM)) {
+                    trade.setStatus(TradeStatus.CANCELLED);
+                    userService.addBalance(trade.getReceiverUsername(), trade.getSum());
+                    tradeRepository.save(trade);
+                    assetService.increaseAssetAmount(trade.getAsset().getId(), trade.getAmount());
+                } else if (trade.getSenderUsername().equals(tradeCancellationDto.getUsername())) {
+                    trade.setStatus(TradeStatus.CANCELLED);
+                    userService.addBalance(trade.getReceiverUsername(), trade.getSum());
+                    tradeRepository.save(trade);
+                    assetService.increaseAssetAmount(trade.getAsset().getId(), trade.getAmount());
+                }
+
+                findById(trade.getId()).ifPresent(this::notifyTradeUpdate);
+            }
+        }
+    }
+
     public Optional<Trade> findById(Long id) {
         return tradeRepository.findById(id);
     }
@@ -121,15 +152,14 @@ public class TradeService {
                 trade.getId(),
                 trade.getSenderUsername(),
                 trade.getReceiverUsername(),
-                // Assuming you have a way to get buyerUserId and assetId
-                // trade.getBuyerUserId(),
-                // trade.getAssetId(),
                 trade.getAmount(),
                 trade.isSenderConfirmed(),
                 trade.isReceiverConfirmed(),
                 trade.getSum(),
                 trade.getStatus(),
-                trade.getAsset().getId()
+                trade.getAsset().getId(),
+                trade.getCreationTime().format(DateTimeFormatter.ISO_DATE_TIME)
+
         ));
     }
 }

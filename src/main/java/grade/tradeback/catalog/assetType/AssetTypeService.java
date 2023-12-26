@@ -97,6 +97,7 @@ public class AssetTypeService {
                 .id(assetType.getId())
                 .name(assetType.getName())
                 .game(gameDto)
+                .type(assetType.getType())
                 .build();
     }
 

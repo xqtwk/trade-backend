@@ -61,8 +61,14 @@ public class TradeController {
             tradeService.confirmTrade(tradeConfirmationDto);
         }
     }
+    @MessageMapping("/trade/cancel")
+    public void cancelTrade(TradeConfirmationDto tradeConfirmationDto, Principal connectedUser) {
+        if (Objects.equals(connectedUser.getName(), tradeConfirmationDto.getUsername())) {
+            tradeService.cancelTrade(tradeConfirmationDto);
+        }
+    }
 
-    @GetMapping("/trade-list/{username}")
+    @GetMapping("/trade-list")
     public ResponseEntity<List<Trade>> getTradeList(Principal currentUser) {
         List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
         return ResponseEntity.ok(chatList);
