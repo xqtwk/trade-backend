@@ -1,6 +1,7 @@
 package grade.tradeback.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import grade.tradeback.security.config.JacksonConfig;
 import grade.tradeback.security.jwt.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +30,11 @@ import java.util.List;
 public class WebsocketConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer implements WebSocketMessageBrokerConfigurer{
 
     private final JwtService jwtService;
+    private final ObjectMapper objectMapper;
 
-    public WebsocketConfig(JwtService jwtService) {
+    public WebsocketConfig(JwtService jwtService, ObjectMapper objectMapper) {
         this.jwtService = jwtService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -64,7 +67,7 @@ public class WebsocketConfig extends AbstractSecurityWebSocketMessageBrokerConfi
         DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
         resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
-        converter.setObjectMapper(new ObjectMapper());
+        converter.setObjectMapper(objectMapper);
         converter.setContentTypeResolver(resolver);
         messageConverters.add(converter);
         return false;
