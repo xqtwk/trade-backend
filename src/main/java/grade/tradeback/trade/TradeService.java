@@ -81,7 +81,7 @@ public class TradeService {
             if (status != TradeStatus.COMPLETED && status != TradeStatus.CANCELLED) {
                 if (trade.getReceiverUsername().equals(tradeConfirmationDto.getUsername()) && trade.isSenderConfirmed()) {
                     confirmReceiver(trade.getId().toString());
-                } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername())) {
+                } else if (trade.getSenderUsername().equals(tradeConfirmationDto.getUsername()) && !trade.isSenderConfirmed()) {
                     confirmSender(trade.getId().toString());
                 }
 
@@ -137,7 +137,7 @@ public class TradeService {
                 }
                 if (trade.getReceiverUsername().equals(tradeCancellationDto.getUsername())
                     && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30
-                    && trade.getAsset().getAssetType().getType().equals(AssetTypeType.ITEM)) {
+                    && trade.getAsset().getAssetType().getType().equals(AssetTypeType.ITEM) && !trade.isSenderConfirmed()) {
                     trade.setStatus(TradeStatus.CANCELLED);
                     userService.addBalance(trade.getReceiverUsername(), trade.getSum());
                     tradeRepository.save(trade);

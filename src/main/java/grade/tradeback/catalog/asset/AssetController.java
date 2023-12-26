@@ -90,4 +90,9 @@ public class AssetController {
         List<AssetDetailsDto> assets = assetService.getAssetsByGameName(gameName);
         return ResponseEntity.ok(assets);
     }
+    @GetMapping("/game/assetType/{assetTypeName}")
+    public ResponseEntity<List<AssetDetailsDto>> getAssetsByAssetTypeName(@PathVariable String assetTypeName) {
+        List<AssetDetailsDto> assets = assetService.getAssetsByAssetTypeName(assetTypeName);
+        return ResponseEntity.ok(assets);
+    }
 }
