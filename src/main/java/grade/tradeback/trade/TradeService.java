@@ -128,7 +128,6 @@ public class TradeService {
                     }
                 } else if (trade.getAsset().getAssetType().getType().equals(AssetTypeType.SERVICE)) {
                     if (trade.getReceiverUsername().equals(tradeCancellationDto.getUsername())
-                        && Duration.between(trade.getCreationTime(), LocalDateTime.now(ZoneOffset.UTC)).toMinutes() >= 30
                         && !trade.isSenderConfirmed()) {
                         trade.setStatus(TradeStatus.CANCELLED);
                         userService.addBalance(trade.getReceiverUsername(), trade.getSum());
