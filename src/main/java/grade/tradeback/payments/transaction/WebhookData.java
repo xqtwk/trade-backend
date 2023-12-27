@@ -15,4 +15,15 @@ public class WebhookData {
     private String id;
     private String type;
     private String trigger_operation_id;
+    private WebhookDataDetails data;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class WebhookDataDetails {
+        private String id;
+        private double amount;
+        private String description;
+    }
 }

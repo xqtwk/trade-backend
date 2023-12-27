@@ -2,6 +2,7 @@ package grade.tradeback.catalog.asset;
 
 import grade.tradeback.catalog.asset.dto.AssetCreationDto;
 import grade.tradeback.catalog.asset.dto.AssetDetailsDto;
+import grade.tradeback.trade.TradeRepository;
 import grade.tradeback.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,8 @@ import java.util.Optional;
 @RequestMapping("/assets")
 public class AssetController {
     private final AssetService assetService;
+    private final TradeRepository tradeRepository;
+    private final AssetRepository assetRepository;
 
     @GetMapping("")
     public ResponseEntity<List<AssetDetailsDto>> getAllAssets() {
@@ -37,6 +40,7 @@ public class AssetController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
     @PostMapping("/create")
     public ResponseEntity<?> createAsset(@RequestBody AssetCreationDto dto, Principal connectedUser) {
         User user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
@@ -52,21 +56,26 @@ public class AssetController {
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateAsset(@PathVariable Long id, @RequestBody AssetCreationDto dto,
-                                                       Principal connectedUser) {
+                                         Principal connectedUser) {
         var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-            Optional<AssetDetailsDto> updatedAsset = assetService.updateAsset(id, dto, user);
+        Optional<AssetDetailsDto> updatedAsset = assetService.updateAsset(id, dto, user);
 
-            System.out.println(dto);
-            if (updatedAsset.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Error Message Here");
-            }
-            return ResponseEntity.ok(updatedAsset);
+        System.out.println(dto);
+        if (updatedAsset.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Negalima atnaujinti skelbimą, " +
+                                                                    "jeigu jis dalyvauja aktyviame sandoryje.");
+        }
+        return ResponseEntity.ok(updatedAsset);
 
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteAsset(@PathVariable Long id, Principal connectedUser) {
+    public ResponseEntity<?> deleteAsset(@PathVariable Long id, Principal connectedUser) {
         User user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        if (assetService.hasActiveOrIssueTrades(assetRepository.findAssetById(id))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Negalima pašalinti skelbimą, " +
+                                                                    "jeigu jis dalyvauja aktyviame sandoryje.");
+        }
         boolean isDeleted = assetService.deleteAsset(id, user);
 
         if (!isDeleted) {
@@ -79,6 +88,11 @@ public class AssetController {
     @GetMapping("/game/{gameName}")
     public ResponseEntity<List<AssetDetailsDto>> getAssetsByGameName(@PathVariable String gameName) {
         List<AssetDetailsDto> assets = assetService.getAssetsByGameName(gameName);
+        return ResponseEntity.ok(assets);
+    }
+    @GetMapping("/game/assetType/{assetTypeName}")
+    public ResponseEntity<List<AssetDetailsDto>> getAssetsByAssetTypeName(@PathVariable String assetTypeName) {
+        List<AssetDetailsDto> assets = assetService.getAssetsByAssetTypeName(assetTypeName);
         return ResponseEntity.ok(assets);
     }
 }

@@ -10,10 +10,19 @@ import grade.tradeback.catalog.assetType.dto.AssetTypeDetailsDto;
 import grade.tradeback.catalog.game.GameService;
 import grade.tradeback.catalog.game.dto.GameCreationDto;
 import grade.tradeback.catalog.game.dto.GameDetailsDto;
+import grade.tradeback.trade.Trade;
+import grade.tradeback.trade.TradeService;
+import grade.tradeback.trade.TradeStatus;
+import grade.tradeback.trade.dto.TradeConfirmationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Objects;
 
 
 @RestController
@@ -23,6 +32,7 @@ public class AdminController {
     private GameService gameService;
     private AssetService assetService;
     private  AssetTypeService assetTypeService;
+    private TradeService tradeService;
 @Autowired
     public AdminController(GameService gameService, AssetService assetService, AssetTypeService assetTypeService) {
         this.gameService = gameService;
@@ -69,5 +79,17 @@ public class AdminController {
         assetTypeService.deleteAssetType(id);
         return ResponseEntity.ok().build();
     }
-    
+    @GetMapping("/trade-list/issues")
+    public ResponseEntity<List<Trade>> getIssuedTrades() {
+        List<Trade> chatList = tradeService.getTradeListByStatus(TradeStatus.ISSUE);
+        return ResponseEntity.ok(chatList);
+    }
+    @PostMapping("/trade/confirm")
+    public void confirmTrade(TradeConfirmationDto tradeConfirmationDto) {
+            tradeService.confirmTrade(tradeConfirmationDto);
+    }
+    @PostMapping("/trade/cancel")
+    public void cancelTrade(TradeConfirmationDto tradeConfirmationDto) {
+            tradeService.cancelTrade(tradeConfirmationDto);
+    }
 }

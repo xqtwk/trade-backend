@@ -19,8 +19,6 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
-    private String checkoutId;
-
     private double amount;
 
     @Enumerated(EnumType.STRING)

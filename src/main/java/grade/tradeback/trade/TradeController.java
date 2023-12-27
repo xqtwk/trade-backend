@@ -35,10 +35,21 @@ public class TradeController {
                 tradeService.sendErrorMessage(principal.getName(), "Deja, negalima pirkti savo pačių pateiktos prekės.");
                 return;
             }
-            if (asset.getAmount() == null || asset.getAmount() >= tradeRequestDto.getAmount()) {
+            if (tradeRequestDto.getAmount() <= 0) {
+                tradeService.sendErrorMessage(principal.getName(), "Neteisingas kiekis");
+                return;
+            }
+            if (
+                asset.getAmount() == null
+                || asset.getAmount() >= tradeRequestDto.getAmount()
+            ) {
                 Trade trade = tradeService.createAndSaveTrade(asset, tradeRequestDto);
-                tradeService.notifySellerAboutTrade(trade);
-                tradeService.sendTradeIdToBuyer(principal.getName(), trade.getId());
+                if (trade != null) {
+                    tradeService.notifySellerAboutTrade(trade);
+                    tradeService.sendTradeIdToBuyer(principal.getName(), trade.getId());
+                }
+            } else {
+                tradeService.sendErrorMessage(principal.getName(), "Neteisingas kiekis");
             }
         }
     }
@@ -50,10 +61,33 @@ public class TradeController {
             tradeService.confirmTrade(tradeConfirmationDto);
         }
     }
+    @MessageMapping("/trade/cancel")
+    public void cancelTrade(TradeConfirmationDto tradeConfirmationDto, Principal connectedUser) {
+        if (Objects.equals(connectedUser.getName(), tradeConfirmationDto.getUsername())) {
+            tradeService.cancelTrade(tradeConfirmationDto);
+        }
+    }
+    @MessageMapping("/trade/issue")
+    public void issueTrade(TradeConfirmationDto tradeConfirmationDto, Principal connectedUser) {
+        if (Objects.equals(connectedUser.getName(), tradeConfirmationDto.getUsername())) {
+            tradeService.issueTrade(tradeConfirmationDto);
+        }
+    }
 
-    @GetMapping("/trade-list/{username}")
+    @GetMapping("/trade-list")
     public ResponseEntity<List<Trade>> getTradeList(Principal currentUser) {
         List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
+        return ResponseEntity.ok(chatList);
+    }
+
+    @GetMapping("/sales")
+    public ResponseEntity<List<Trade>> getSalesList(Principal currentUser) {
+        List<Trade> chatList = tradeService.getSalesListForUser(currentUser.getName());
+        return ResponseEntity.ok(chatList);
+    }
+    @GetMapping("/purchases")
+    public ResponseEntity<List<Trade>> getPurchasesList(Principal currentUser) {
+        List<Trade> chatList = tradeService.getPurchasesListForUser(currentUser.getName());
         return ResponseEntity.ok(chatList);
     }
 

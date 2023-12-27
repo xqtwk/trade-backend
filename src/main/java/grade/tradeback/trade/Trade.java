@@ -9,6 +9,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,4 +38,12 @@ public class Trade {
 
     @Enumerated(EnumType.STRING)
     private TradeStatus status;
+
+    @Column(name = "creation_time")
+    private LocalDateTime creationTime;
+
+    @PrePersist
+    protected void onCreate() {
+        creationTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+    }
 }

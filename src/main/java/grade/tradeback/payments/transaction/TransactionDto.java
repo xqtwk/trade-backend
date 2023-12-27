@@ -10,7 +10,6 @@ public class TransactionDto {
     private long id;
     private String operationId;
     private TransactionType type;
-    private String checkoutId;
     private double amount;
     private TransactionStatus status;
 }

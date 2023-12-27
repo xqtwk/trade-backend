@@ -1,10 +1,9 @@
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 20s
-  config:
-    import: stripe.properties, plaid.properties, checkout.properties
   datasource:
     url: jdbc:postgresql://62.72.21.48:5432/u922605802_trade
+    #url: jdbc:postgresql://localhost:5432/u922605802_trade
     #PRODUCTION url: jdbc:postgresql://postgres-trade:5432/u922605802_trade
     username: u922605802_xqtwk
     password: 3gouwmt#G

@@ -2,6 +2,7 @@ package grade.tradeback;
 
 import grade.tradeback.payments.rapyd.RapydService;
 import grade.tradeback.user.UserService;
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
