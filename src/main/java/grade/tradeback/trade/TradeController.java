@@ -67,12 +67,19 @@ public class TradeController {
             tradeService.cancelTrade(tradeConfirmationDto);
         }
     }
+    @MessageMapping("/trade/issue")
+    public void issueTrade(TradeConfirmationDto tradeConfirmationDto, Principal connectedUser) {
+        if (Objects.equals(connectedUser.getName(), tradeConfirmationDto.getUsername())) {
+            tradeService.issueTrade(tradeConfirmationDto);
+        }
+    }
 
     @GetMapping("/trade-list")
     public ResponseEntity<List<Trade>> getTradeList(Principal currentUser) {
         List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
         return ResponseEntity.ok(chatList);
     }
+
     @GetMapping("/sales")
     public ResponseEntity<List<Trade>> getSalesList(Principal currentUser) {
         List<Trade> chatList = tradeService.getSalesListForUser(currentUser.getName());

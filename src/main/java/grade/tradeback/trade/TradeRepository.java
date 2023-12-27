@@ -11,5 +11,6 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
     List<Trade> findBySenderUsernameOrReceiverUsername(String senderUsername, String recipientUsername);
     List<Trade> findBySenderUsername(String senderUsername);
     List<Trade> findByReceiverUsername(String recipientUsername);
+    List<Trade> findByStatus(TradeStatus status);
     Optional<Trade> findById(Long id);
 }

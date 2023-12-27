@@ -90,6 +90,8 @@ public class TradeService {
         }
     }
 
+
+
     private void notifyTradeUpdate(Trade updatedTrade) {
         messagingTemplate.convertAndSendToUser(updatedTrade.getSenderUsername(), "/queue/trade", updatedTrade);
         messagingTemplate.convertAndSendToUser(updatedTrade.getReceiverUsername(), "/queue/trade", updatedTrade);
@@ -154,6 +156,18 @@ public class TradeService {
         }
     }
 
+    public void issueTrade(TradeConfirmationDto tradeCancellationDto) {
+        Trade trade = tradeRepository.findById(tradeCancellationDto.getTradeId()).orElse(null);
+        if (trade != null) {
+            TradeStatus status = trade.getStatus();
+            if (status != TradeStatus.COMPLETED && status != TradeStatus.CANCELLED && status != TradeStatus.ISSUE) {
+                trade.setStatus(TradeStatus.ISSUE);
+                tradeRepository.save(trade);
+                findById(trade.getId()).ifPresent(this::notifyTradeUpdate);
+            }
+        }
+    }
+
     public Optional<Trade> findById(Long id) {
         return tradeRepository.findById(id);
     }
@@ -186,5 +200,8 @@ public class TradeService {
                 trade.getCreationTime().format(DateTimeFormatter.ISO_DATE_TIME)
 
         ));
+    }
+    public List<Trade> getTradeListByStatus(TradeStatus status) {
+        return tradeRepository.findByStatus(status);
     }
 }
