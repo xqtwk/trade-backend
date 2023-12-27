@@ -9,10 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DepositRequest {
-    private String username;
-    private String country;
-    private int amount;
-    private String merchantReferenceId;
-    private String description;
+public class Sender {
+    private String companyName;
+    private String postcode;
+    private String city;
+    private String state;
+    private String address;
+
 }

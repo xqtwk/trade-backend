@@ -162,6 +162,14 @@ public class TradeService {
         return tradeRepository.findBySenderUsernameOrReceiverUsername(username, username);
     }
 
+    public List<Trade> getSalesListForUser(String username) {
+        return tradeRepository.findBySenderUsername(username);
+    }
+
+    public List<Trade> getPurchasesListForUser(String username) {
+        return tradeRepository.findByReceiverUsername(username);
+    }
+
     public Optional<TradeResponseDto> getTradeForUser(Long tradeId, String username) {
         return tradeRepository.findById(tradeId).filter(trade ->
                 trade.getSenderUsername().equals(username) || trade.getReceiverUsername().equals(username)

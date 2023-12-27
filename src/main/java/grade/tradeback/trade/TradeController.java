@@ -73,6 +73,16 @@ public class TradeController {
         List<Trade> chatList = tradeService.getTradeListForUser(currentUser.getName());
         return ResponseEntity.ok(chatList);
     }
+    @GetMapping("/sales")
+    public ResponseEntity<List<Trade>> getSalesList(Principal currentUser) {
+        List<Trade> chatList = tradeService.getSalesListForUser(currentUser.getName());
+        return ResponseEntity.ok(chatList);
+    }
+    @GetMapping("/purchases")
+    public ResponseEntity<List<Trade>> getPurchasesList(Principal currentUser) {
+        List<Trade> chatList = tradeService.getPurchasesListForUser(currentUser.getName());
+        return ResponseEntity.ok(chatList);
+    }
 
     @GetMapping("/trade/{id}")
     public ResponseEntity<TradeResponseDto> getTrade(@PathVariable Long id, Principal currentUser) {

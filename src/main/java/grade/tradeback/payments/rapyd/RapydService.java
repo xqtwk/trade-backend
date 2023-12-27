@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -22,9 +24,11 @@ import org.apache.http.util.EntityUtils;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
@@ -69,8 +73,6 @@ public class RapydService {
         }
         return digest;
     }
-
-
     public String givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect() {
         int leftLimit = 97;   // letter 'a'
         int rightLimit = 122; // letter 'z'
@@ -193,78 +195,256 @@ public class RapydService {
 
         String status = getStatus(responseMap);
         System.out.println(status);
-        return status;
+        return responseMap.toString();
     }
-
-
-    public String createPayout(String sender, String amount) throws Exception {
-        String httpMethod = "post";
-        String urlPath = "/v1/payouts";
+    public String completePayout(String payoutId, int amount) throws IOException {
+        String httpMethod = "POST";
+        String urlPath = "/v1/payouts/complete/" + payoutId + "/" + amount;
         String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
         long timestamp = System.currentTimeMillis() / 1000L;
+        String bodyString = "{}"; // Empty JSON for this request
 
-        // Construct the request body as per Rapyd API documentation example
-        String requestBody = "{"
-                             + "\"payout_amount\": 250,"
-                             + "\"payout_currency\": \"EUR\","
-                             + "\"payout_method_type\": \"eu_sepa_bank\","
-                             + "\"sender_currency\": \"EUR\","
-                             + "\"sender_country\": \"LT\","
-                             + "\"sender_entity_type\": \"company\","
-                             + "\"sender\": \"sender_1654a758e2465bcc48e26fe735a629fb\","
-                             + "\"beneficiary\": \"beneficiary_f9ab0471c1272821bdabe92341e227e0\","
-                             + "\"beneficiary_country\": \"LT\","
-                             + "\"beneficiary_entity_type\": \"individual\","
-                             + "\"description\": \"Payout - Bank Transfer: Beneficiary/Sender IDs\","
-                             + "\"statement_descriptor\": \"lmao\""
-                             + "}";
-        requestBody = requestBody.replaceAll("\\s+", "");
-        System.out.println(requestBody);
-        // Generate the signature
-        String toEnc = httpMethod + urlPath + salt + timestamp + access_key + secret_key + requestBody;
-        String StrhashCode = hmacDigest(toEnc, secret_key, "HmacSHA256");
-        String signature = Base64.getEncoder().encodeToString(StrhashCode.getBytes());
+        // Concatenate the string for signature
+        String toEnc = httpMethod + urlPath + salt + timestamp + access_key + secret_key + bodyString;
+        String signature = hmacDigest(toEnc, secret_key, "HmacSHA256");
+        if (signature == null) {
+            throw new RuntimeException("Failed to generate signature");
+        }
+        String encodedSignature = Base64.getEncoder().encodeToString(signature.getBytes());
 
-        HttpClient httpclient = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost(apiUrl + urlPath);
+        // Prepare and execute the HTTP POST request
+        HttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(apiUrl + urlPath);
 
-        // Setting the headers
-        httppost.addHeader("Content-Type", "application/json");
-        httppost.addHeader("access_key", access_key);
-        httppost.addHeader("salt", salt);
-        httppost.addHeader("timestamp", Long.toString(timestamp));
-        httppost.addHeader("signature", signature);
+        httpPost.addHeader("Content-Type", "application/json");
+        httpPost.addHeader("access_key", access_key);
+        httpPost.addHeader("salt", salt);
+        httpPost.addHeader("timestamp", String.valueOf(timestamp));
+        httpPost.addHeader("signature", encodedSignature);
+        httpPost.setEntity(new StringEntity(bodyString));
 
-        // Setting the request body
-        httppost.setEntity(new StringEntity(requestBody));
-
-        // Execute the request
-        HttpResponse response = httpclient.execute(httppost);
+        HttpResponse response = httpClient.execute(httpPost);
         HttpEntity entity = response.getEntity();
         return entity != null ? EntityUtils.toString(entity) : null;
     }
 
-    public DepositResponse createCheckout(String username, String country, int amount) throws Exception {
-        if (amount == 0) {
-            throw new IllegalArgumentException("Amount must not be zero");
+   /* public String createEuSepaBankPayout(SepaPayoutRequest payoutRequest) throws IOException {
+        String httpMethod = "post";
+        String urlPath = "/v1/payouts";
+        String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
+        long timestamp = System.currentTimeMillis() / 1000L;
+        String username = payoutRequest.getDescription();
+        // Construct the JSON request body and remove whitespaces
+        String iban = payoutRequest.getBeneficiaryIban();
+        String beneficiaryCountry = "";
+        if (iban != null && iban.length() >= 2) {
+            beneficiaryCountry = iban.substring(0, 2).toUpperCase();
         }
-        if (amount < 0) {
-            amount *= -1;
+        String requestBody = String.format("{"
+                                           + "\"payout_amount\": %d,"
+                                           + "\"payout_currency\": \"%s\","
+                                           + "\"payout_method_type\": \"eu_sepa_bank\","
+                                           + "\"sender_currency\": \"%s\","
+                                           + "\"sender_country\": \"%s\","
+                                           + "\"sender_entity_type\": \"%s\","
+                                           + "\"sender\": {"
+                                           +     "\"company_name\": \"%s\""
+                                           + "},"
+                                           + "\"beneficiary\": {"
+                                           +     "\"first_name\": \"%s\","
+                                           +     "\"last_name\": \"%s\","
+                                           +     "\"iban\": \"%s\""
+                                           + "},"
+                                           + "\"beneficiary_country\": \"%s\","
+                                           + "\"beneficiary_entity_type\": \"%s\","
+                                           + "\"description\": \"%s\","
+                                           + "\"statement_descriptor\": \"%s\","
+                                           + "\"metadata\": {"
+                                           +     "\"statement_descriptor\": \"%s\""
+                                           + "}"
+                                           + "}",
+                payoutRequest.getAmount(),
+                payoutRequest.getPayoutCurrency(),
+                payoutRequest.getSenderCurrency(),
+                payoutRequest.getSenderCountry(),
+                payoutRequest.getSenderEntityType(),
+                payoutRequest.getSenderCompanyName(),
+                payoutRequest.getBeneficiaryFirstName(),
+                payoutRequest.getBeneficiaryLastName(),
+                payoutRequest.getBeneficiaryIban(),
+                beneficiaryCountry,
+                payoutRequest.getBeneficiaryEntityType(),
+                payoutRequest.getDescription(),
+                payoutRequest.getStatementDescriptor(),
+                payoutRequest.getStatementDescriptor());
+        requestBody = requestBody.replaceAll("\\s+", "");
+        System.out.println(requestBody);
+        // Concatenate the string for signature
+        String toEnc = httpMethod + urlPath + salt + timestamp + access_key + secret_key + requestBody;
+
+        // Generate the signature
+        String signature = hmacDigest(toEnc, secret_key, "HmacSHA256");
+        if (signature == null) {
+            throw new RuntimeException("Failed to generate signature");
         }
+        String encodedSignature = Base64.getEncoder().encodeToString(signature.getBytes(StandardCharsets.UTF_8));
+
+        // Prepare and execute the HTTP POST request
+        HttpPost httpPost = new HttpPost(apiUrl + urlPath);
+        httpPost.addHeader("Content-Type", "application/json");
+        httpPost.addHeader("access_key", access_key);
+        httpPost.addHeader("salt", salt);
+        httpPost.addHeader("timestamp", String.valueOf(timestamp));
+        httpPost.addHeader("signature", encodedSignature);
+        httpPost.setEntity(new StringEntity(requestBody));
+
+        HttpResponse response = HttpClients.createDefault().execute(httpPost);
+        HttpEntity entity = response.getEntity();
+        String responseString = entity != null ? EntityUtils.toString(entity) : null;
+        System.out.println("Response from Rapyd API: " + responseString);
+        // Parse the response to check for success
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap<String, Object> responseMap = objectMapper.readValue(responseString, new TypeReference<>() {});
+        if (Objects.equals(getStatus(responseMap), "SUCCESS")) {
+            // Create and save the transaction
+            Optional<User> userOptional = userRepository.findByUsername(username);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                Transaction transaction = Transaction.builder()
+                        .operationId(getOperationId(responseMap)) // You need to extract the operation ID from the payout response
+                        .user(user)
+                        .amount(payoutRequest.getAmount())
+                        .status(TransactionStatus.PENDING) // Adjust the status as needed
+                        .type(TransactionType.PAYOUT) // Assuming you have a PAYOUT type
+                        .build();
+                userService.addTransactionToUser(username, transaction);
+                userRepository.save(user);
+            }
+        }
+
+        return responseString;
+    }*/
+   public String createEuSepaBankPayout(SepaPayoutRequest payoutRequest) throws IOException {
+       String httpMethod = "post";
+       String urlPath = "/v1/payouts";
+       String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
+       long timestamp = System.currentTimeMillis() / 1000L;
+       String username = payoutRequest.getDescription();
+       // Construct the JSON request body and remove whitespaces
+       String iban = payoutRequest.getBeneficiaryIban();
+       String beneficiaryCountry = "";
+       if (iban != null && iban.length() >= 2) {
+           beneficiaryCountry = iban.substring(0, 2).toUpperCase();
+       }
+       String requestBody = String.format("{"
+                                          + "\"payout_amount\": %d,"
+                                          + "\"payout_currency\": \"%s\","
+                                          + "\"payout_method_type\": \"eu_sepa_bank\","
+                                          + "\"sender_currency\": \"%s\","
+                                          + "\"sender_country\": \"%s\","
+                                          + "\"sender_entity_type\": \"%s\","
+                                          + "\"sender\": {"
+                                          +     "\"company_name\": \"%s\""
+                                          + "},"
+                                          + "\"beneficiary\": {"
+                                          +     "\"first_name\": \"%s\","
+                                          +     "\"last_name\": \"%s\","
+                                          +     "\"iban\": \"%s\""
+                                          + "},"
+                                          + "\"beneficiary_country\": \"%s\","
+                                          + "\"beneficiary_entity_type\": \"%s\","
+                                          + "\"description\": \"%s\","
+                                          + "\"statement_descriptor\": \"%s\","
+                                          + "\"metadata\": {"
+                                          +     "\"statement_descriptor\": \"%s\""
+                                          + "}"
+                                          + "}",
+               payoutRequest.getAmount(),
+               payoutRequest.getPayoutCurrency(),
+               payoutRequest.getSenderCurrency(),
+               payoutRequest.getSenderCountry(),
+               payoutRequest.getSenderEntityType(),
+               payoutRequest.getSenderCompanyName(),
+               payoutRequest.getBeneficiaryFirstName(),
+               payoutRequest.getBeneficiaryLastName(),
+               payoutRequest.getBeneficiaryIban(),
+               beneficiaryCountry,
+               payoutRequest.getBeneficiaryEntityType(),
+               payoutRequest.getDescription(),
+               payoutRequest.getStatementDescriptor(),
+               payoutRequest.getStatementDescriptor());
+       requestBody = requestBody.replaceAll("\\s+", "");
+       System.out.println(requestBody);
+       // Concatenate the string for signature
+       String toEnc = httpMethod + urlPath + salt + timestamp + access_key + secret_key + requestBody;
+
+       // Generate the signature
+       String signature = hmacDigest(toEnc, secret_key, "HmacSHA256");
+       if (signature == null) {
+           throw new RuntimeException("Failed to generate signature");
+       }
+       String encodedSignature = Base64.getEncoder().encodeToString(signature.getBytes(StandardCharsets.UTF_8));
+
+       // Prepare and execute the HTTP POST request
+       HttpPost httpPost = new HttpPost(apiUrl + urlPath);
+       httpPost.addHeader("Content-Type", "application/json");
+       httpPost.addHeader("access_key", access_key);
+       httpPost.addHeader("salt", salt);
+       httpPost.addHeader("timestamp", String.valueOf(timestamp));
+       httpPost.addHeader("signature", encodedSignature);
+       httpPost.setEntity(new StringEntity(requestBody));
+
+       HttpResponse response = HttpClients.createDefault().execute(httpPost);
+       HttpEntity entity = response.getEntity();
+       String responseString = entity != null ? EntityUtils.toString(entity) : null;
+       System.out.println("Response from Rapyd API: " + responseString);
+       // Parse the response to check for success
+       ObjectMapper objectMapper = new ObjectMapper();
+       HashMap<String, Object> responseMap = objectMapper.readValue(responseString, new TypeReference<>() {});
+
+       if (Objects.equals(getStatus(responseMap), "SUCCESS")) {
+           // Create and save the transaction
+           Optional<User> userOptional = userRepository.findByUsername(username);
+           if (userOptional.isPresent()) {
+               User user = userOptional.get();
+               Transaction transaction = Transaction.builder()
+                       .operationId(getOperationId(responseMap)) // You need to extract the operation ID from the payout response
+                       .user(user)
+                       .amount(payoutRequest.getAmount())
+                       .status(TransactionStatus.PENDING) // Adjust the status as needed
+                       .type(TransactionType.PAYOUT) // Assuming you have a PAYOUT type
+                       .build();
+               userService.addTransactionToUser(username, transaction);
+               userRepository.save(user);
+               userService.removeBalance(username, payoutRequest.getAmount());
+           }
+       }
+
+       return responseString;
+   }
+
+
+    public DepositResponse createCheckout(String username, String country, int amount, String merchantReferenceId, String description) throws Exception {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+
         String httpMethod = "post";
         String urlPath = "/v1/checkout";
         String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
         long timestamp = System.currentTimeMillis() / 1000L;
 
         // Construct the request body for checkout creation
-        String requestBody = "{"
-                             + "\"amount\": 100,"
-                             + "\"currency\": \"EUR\","
-                             + "\"country\": \"" + country + "\","
-                             + "\"complete_checkout_url\": \"https://www.rapyd.net/\","
-                             + "\"cancel_checkout_url\": \"https://www.rapyd.net/\","
-                             + "\"language\": \"lt\""
-                             + "}";
+        String requestBody = String.format("{"
+                                           + "\"amount\": %d,"
+                                           + "\"currency\": \"EUR\","
+                                           + "\"country\": \"%s\","
+                                           + "\"complete_checkout_url\": \"https://pixelpact.eu/wallet\","
+                                           + "\"cancel_checkout_url\": \"https://pixelpact.eu/wallet\","
+                                           + "\"merchant_reference_id\": \"%s\","
+                                           + "\"description\": \"%s\","
+                                           + "\"language\": \"lt\""
+                                           + "}", amount, country, merchantReferenceId, description);
         requestBody = requestBody.replaceAll("\\s+", "");
 
         // Generate the signature
@@ -286,13 +466,12 @@ public class RapydService {
         httpPost.setEntity(new StringEntity(requestBody));
 
         // Send the request and handle the response
+        System.out.println("Request Body: " + requestBody);
         HttpResponse response = httpClient.execute(httpPost);
         HttpEntity responseEntity = response.getEntity();
 
-
         ObjectMapper objectMapper = new ObjectMapper();
-        HashMap<String, Object> responseMap = objectMapper.readValue(EntityUtils.toString(responseEntity), new TypeReference<>() {
-        });
+        HashMap<String, Object> responseMap = objectMapper.readValue(EntityUtils.toString(responseEntity), new TypeReference<>() {});
         System.out.println(responseMap);
         String checkoutId = getCheckoutId(responseMap);
         if (Objects.equals(getStatus(responseMap), "SUCCESS")) {
@@ -305,26 +484,23 @@ public class RapydService {
                         .amount(amount)
                         .status(TransactionStatus.PENDING)
                         .type(TransactionType.PAYMENT)
-                        .checkoutId(checkoutId)
                         .build();
                 userService.addTransactionToUser(username, transaction);
                 userRepository.save(user);
             }
         }
-        /*return responseEntity != null ? EntityUtils.toString(responseEntity) : null;*/
         System.out.println(getCheckoutId(responseMap));
         return DepositResponse.builder().checkoutId(checkoutId).build();
     }
 
     public boolean verifyWebhookSignature(String timestamp, String salt, String signature, String requestBody) {
         String urlPath = "https://pixelpact.eu/api/webhook/catch"; // Get the entire URL path
-
         // Recreate the string used for signature calculation
         String toEnc = urlPath + salt + timestamp + access_key + secret_key + requestBody;
-
+        System.out.println("toEnc: "+toEnc);
         // Calculate the HMAC-SHA256 hash of the toEnc string
         String calculatedSignature = hmacDigest(toEnc, secret_key, "HmacSHA256");
-
+        System.out.println("hmacsha256 signature " + calculatedSignature);
         // Decode the provided signature from Base64
         //byte[] providedSignatureBytes = Base64.getDecoder().decode(signature);
 
@@ -335,5 +511,34 @@ public class RapydService {
         System.out.println("my signature: " + calculatedSignatureBase64);
         System.out.println("signature from webhook: " + signature);
         return calculatedSignatureBase64.equals(signature);
+    }
+
+    public String getPaymentDetails(String paymentId) throws Exception {
+        String httpMethod = "get";
+        String urlPath = "/v1/payments/" + paymentId; // Construct the URL path with the payment ID
+        String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
+        long timestamp = System.currentTimeMillis() / 1000L;
+        String bodyString = ""; // Empty for GET requests
+
+        // Concatenate the string for signature
+        String toEnc = httpMethod + urlPath + salt + timestamp + access_key + secret_key + bodyString;
+        String StrhashCode = hmacDigest(toEnc, secret_key, "HmacSHA256");
+        String signature = Base64.getEncoder().encodeToString(StrhashCode.getBytes());
+
+        // HttpClient as used in other methods
+        HttpClient httpclient = HttpClients.createDefault();
+        HttpGet httpget = new HttpGet(apiUrl + urlPath);
+
+        // Setting the headers
+        httpget.addHeader("Content-Type", "application/json");
+        httpget.addHeader("access_key", access_key);
+        httpget.addHeader("salt", salt);
+        httpget.addHeader("timestamp", Long.toString(timestamp));
+        httpget.addHeader("signature", signature);
+
+        // Execute the request
+        HttpResponse response = httpclient.execute(httpget);
+        HttpEntity entity = response.getEntity();
+        return entity != null ? EntityUtils.toString(entity) : null;
     }
 }

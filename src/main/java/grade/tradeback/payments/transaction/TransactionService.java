@@ -26,13 +26,28 @@ public class TransactionService {
         userService.addBalance(user.getUsername(), amount);
     }
     @Transactional
+    public void completePayout(Transaction transaction, double amount) {
+        // Update transaction status
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transactionRepository.save(transaction);
+
+    }
+    @Transactional
     public void cancelPayment(Transaction transaction) {
         // Update transaction status
         transaction.setStatus(TransactionStatus.CANCELED);
         transactionRepository.save(transaction);
     }
+    @Transactional
+    public void cancelPayout(Transaction transaction, double amount) {
+        // Update transaction status
+        transaction.setStatus(TransactionStatus.CANCELED);
+        transactionRepository.save(transaction);
+        User user = transaction.getUser();
+        userService.addBalance(user.getUsername(), amount);
+    }
 
-    public String extractRequestBody(HttpServletRequest request) throws IOException {
+    /*public String extractRequestBody(HttpServletRequest request) throws IOException {
         StringBuilder requestBody = new StringBuilder();
         String line;
         try (BufferedReader reader = request.getReader()) {
@@ -40,7 +55,20 @@ public class TransactionService {
                 requestBody.append(line);
             }
         }
+        System.out.println("body before strip: " + requestBody);
         return requestBody.toString().replaceAll("\\s+", "");
+    }*/
+    public String extractRequestBody(HttpServletRequest request) throws IOException {
+        StringBuilder requestBody = new StringBuilder();
+        String line;
+        try (BufferedReader reader = request.getReader()) {
+            while ((line = reader.readLine()) != null) {
+                //requestBody.append(line).append('\n'); // Preserve line breaks
+                requestBody.append(line); // Preserve line breaks
+            }
+        }
+        System.out.println(requestBody.toString());
+        return requestBody.toString(); // Return raw JSON without altering whitespace
     }
 
 }

@@ -64,7 +64,6 @@ public class UserService {
                         transaction.getId(),
                         transaction.getOperationId(),
                         transaction.getType(),
-                        transaction.getCheckoutId(),
                         transaction.getAmount(),
                         transaction.getStatus()
                 ))
