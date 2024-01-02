@@ -1,6 +1,9 @@
 package grade.tradeback.payments.rapyd;
 
+import grade.tradeback.user.entity.User;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,7 +56,13 @@ public class RapydController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Failed to process payout: " + e.getMessage());
+            if (e.getMessage().contains("Insufficient funds")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to process payout: Insufficient funds");
+            } else if (e.getMessage().contains("User not found")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to process payout: User not found");
+            } else {
+                return ResponseEntity.internalServerError().body("Failed to process payout: " + e.getMessage());
+            }
         }
     }
 }

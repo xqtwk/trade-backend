@@ -325,11 +325,20 @@ public class RapydService {
         return responseString;
     }*/
    public String createEuSepaBankPayout(SepaPayoutRequest payoutRequest) throws IOException {
+       String username = payoutRequest.getDescription();
+
+       Optional<User> userOptional = userRepository.findByUsername(username);
+       if (userOptional.isEmpty()) {
+           throw new RuntimeException("User not found");
+       }
+       User user = userOptional.get();
+       if (user.getBalance() < payoutRequest.getAmount()) {
+           throw new RuntimeException("Insufficient funds");
+       }
        String httpMethod = "post";
        String urlPath = "/v1/payouts";
        String salt = givenUsingPlainJava_whenGeneratingRandomStringUnbounded_thenCorrect();
        long timestamp = System.currentTimeMillis() / 1000L;
-       String username = payoutRequest.getDescription();
        // Construct the JSON request body and remove whitespaces
        String iban = payoutRequest.getBeneficiaryIban();
        String beneficiaryCountry = "";
@@ -404,9 +413,6 @@ public class RapydService {
 
        if (Objects.equals(getStatus(responseMap), "SUCCESS")) {
            // Create and save the transaction
-           Optional<User> userOptional = userRepository.findByUsername(username);
-           if (userOptional.isPresent()) {
-               User user = userOptional.get();
                Transaction transaction = Transaction.builder()
                        .operationId(getOperationId(responseMap)) // You need to extract the operation ID from the payout response
                        .user(user)
@@ -417,7 +423,6 @@ public class RapydService {
                userService.addTransactionToUser(username, transaction);
                userRepository.save(user);
                userService.removeBalance(username, payoutRequest.getAmount());
-           }
        }
 
        return responseString;
