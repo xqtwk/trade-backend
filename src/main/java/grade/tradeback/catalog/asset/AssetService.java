@@ -229,6 +229,13 @@ public class AssetService {
                 .map(this::convertToAssetDetailsDto)
                 .collect(Collectors.toList());
     }
+
+    public List<AssetDetailsDto> getAssetsByGameNameAndAssetTypeName(String gameName, String assetTypeName) {
+        return assetRepository.findAssetsByGameNameAndAssetTypeName(gameName, assetTypeName).stream()
+                .map(this::convertToAssetDetailsDto)
+                .collect(Collectors.toList());
+    }
+
     public Optional<Asset> findById(Long id) {
         return assetRepository.findById(id);
     }
